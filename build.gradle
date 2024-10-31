@@ -75,7 +75,7 @@ java {
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
+		rename { "${it}_${project.archivesBaseName}" }
 	}
 }
 
@@ -95,5 +95,13 @@ publishing {
 		maven {
 			url "$projectDir/../../CommonMaven"
 		}
+
+		//Shaijana start
+		maven {
+			name = "fabimRepo"
+			url = uri("https://repo.fabim.de/repository/maven-mixed/")
+			credentials(PasswordCredentials.class)
+		}
+		//Shaijana end
 	}
 }
