@@ -1,14 +1,14 @@
 package fi.dy.masa.malilib.gui;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableList;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import fi.dy.masa.malilib.MaLiLibReference;
+import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.gui.widgets.WidgetDropDownList;
-import net.fabricmc.loader.api.FabricLoader;
+import fi.dy.masa.malilib.registry.Registry;
+import fi.dy.masa.malilib.util.data.ModInfo;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import net.minecraft.client.gui.screen.Screen;
 import fi.dy.masa.malilib.config.ConfigManager;
@@ -28,7 +28,7 @@ import fi.dy.masa.malilib.util.StringUtils;
 
 public abstract class GuiConfigsBase extends GuiListBase<ConfigOptionWrapper, WidgetConfigOption, WidgetListConfigOptions> implements IKeybindConfigGui
 {
-    protected WidgetDropDownList<EntrypointContainer<ModMenuApi>> modSwitchWidget;
+    protected WidgetDropDownList<ModInfo> modSwitchWidget;
     protected final List<Runnable> hotkeyChangeListeners = new ArrayList<>();
     protected final ButtonPressDirtyListenerSimple dirtyListener = new ButtonPressDirtyListenerSimple();
     protected final String modId;
@@ -49,46 +49,26 @@ public abstract class GuiConfigsBase extends GuiListBase<ConfigOptionWrapper, Wi
     public void initGui() {
         super.initGui();
 
-        if (FabricLoader.getInstance().isModLoaded(MaLiLibReference.MODMENU_ID)) {
-            List<EntrypointContainer<ModMenuApi>> entrypointContainers = FabricLoader.getInstance().getEntrypointContainers(MaLiLibReference.MODMENU_ID, ModMenuApi.class)
-                    // This will stack overflow if called in <init>()
-                    .stream().filter(mod -> {
-                            try {
-                                return mod.getEntrypoint().getModConfigScreenFactory().create(null) instanceof GuiConfigsBase;
-                            }
-                            catch (Exception e)
-                            {
-                                return false;
-                            }
-                        }
-                    )
-                    .toList();
-            EntrypointContainer<ModMenuApi> thisContainer = entrypointContainers.stream().filter(mod -> {
-                GuiConfigsBase gui = (GuiConfigsBase) mod.getEntrypoint().getModConfigScreenFactory().create(null);
-                if (gui == null) return false;
-                return gui.getClass() == this.getClass();
-            }).findFirst().orElse(null);
-            modSwitchWidget = new WidgetDropDownList<>(GuiUtils.getScaledWindowWidth() - 155, 13, 130, 18, 200, 10, entrypointContainers) {
-                {
-                    selectedEntry = thisContainer;
-                }
+        ModInfo thisMod = Registry.CONFIG_SCREEN.getModInfoFromConfigScreen(this.getClass());
+        modSwitchWidget = new WidgetDropDownList<>(GuiUtils.getScaledWindowWidth() - 155, 13, 130, 18, 200, 10, Registry.CONFIG_SCREEN.getAllModsWithConfigScreens()) {
+            {
+                selectedEntry = thisMod;
+            }
 
-                @Override
-                protected void setSelectedEntry(int index) {
-                    super.setSelectedEntry(index);
-                    if (selectedEntry != null) {
-                        client.setScreen(selectedEntry.getEntrypoint().getModConfigScreenFactory().create(null));
-                    }
+            @Override
+            protected void setSelectedEntry(int index) {
+                super.setSelectedEntry(index);
+                if (selectedEntry != null && selectedEntry.getConfigScreenSupplier() != null) {
+                    client.setScreen(selectedEntry.getConfigScreenSupplier().get());
                 }
+            }
 
-                @Override
-                protected String getDisplayString(EntrypointContainer<ModMenuApi> entry) {
-                    if (entry == null) return "";
-                    return entry.getProvider().getMetadata().getName();
-                }
-            };
-            addWidget(modSwitchWidget);
-        }
+            @Override
+            protected String getDisplayString(ModInfo entry) {
+                return entry.getModName();
+            }
+        };
+        addWidget(modSwitchWidget);
     }
 
     @Override

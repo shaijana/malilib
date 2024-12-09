@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableList;
+import fi.dy.masa.malilib.gui.GuiBase;
 import org.jetbrains.annotations.ApiStatus;
 
-import fi.dy.masa.malilib.gui.BaseScreen;
 import fi.dy.masa.malilib.util.data.ModInfo;
 
 /**
@@ -18,30 +18,38 @@ import fi.dy.masa.malilib.util.data.ModInfo;
 @ApiStatus.Experimental
 public class ConfigScreenRegistry
 {
-    protected final Map<ModInfo, Supplier<BaseScreen>> configScreenFactories = new HashMap<>();
+    protected final Map<String, ModInfo> modsMap = new HashMap<>();
     protected ImmutableList<ModInfo> mods = ImmutableList.of();
 
     public ConfigScreenRegistry()
     {
     }
 
-    public void registerConfigScreenFactory(ModInfo modInfo, Supplier<BaseScreen> screenFactory)
+    public void registerConfigScreenFactory(ModInfo modInfo)
     {
-        this.configScreenFactories.put(modInfo, screenFactory);
-
-        ArrayList<ModInfo> list = new ArrayList<>(this.configScreenFactories.keySet());
+        this.modsMap.put(modInfo.getModId(), modInfo);
+        ArrayList<ModInfo> list = new ArrayList<>(this.modsMap.values());
         list.sort(Comparator.comparing(ModInfo::getModName));
         this.mods = ImmutableList.copyOf(list);
     }
 
     @Nullable
-    public Supplier<BaseScreen> getConfigScreenFactoryFor(ModInfo modInfo)
+    public Supplier<GuiBase> getConfigScreenFactoryFor(ModInfo modInfo)
     {
-        return this.configScreenFactories.get(modInfo);
+        return this.modsMap.get(modInfo.getModId()).getConfigScreenSupplier();
     }
 
     public ImmutableList<ModInfo> getAllModsWithConfigScreens()
     {
         return this.mods;
+    }
+
+    public @Nullable ModInfo getModInfoFromConfigScreen(Class<? extends GuiBase> clazz)
+    {
+        return this.modsMap.values().stream()
+                .filter(mod -> mod.getConfigScreenSupplier() != null)
+                .filter(mod -> mod.getConfigScreenSupplier().get().getClass() == clazz)
+                .findFirst()
+                .orElse(null);
     }
 }

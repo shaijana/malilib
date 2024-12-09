@@ -36,7 +36,7 @@ public interface ScreenTab extends NameIdentifiable
      * Returns the button action listener that should be used for this tab's selection button
      * @return the button action listener that handles this tab's button's presses
      */
-    ButtonActionListener getButtonActionListener(BaseTabbedScreen currentScreen);
+//    ButtonActionListener getButtonActionListener(BaseTabbedScreen currentScreen);
 
     /**
      * Returns true if this tab can use the current screen,

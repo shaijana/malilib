@@ -1,5 +1,6 @@
 package fi.dy.masa.malilib.registry;
 
+import fi.dy.masa.malilib.gui.config.registry.ConfigScreenRegistry;
 import org.jetbrains.annotations.ApiStatus;
 
 import fi.dy.masa.malilib.gui.config.registry.ConfigTabExtensionRegistry;
@@ -19,4 +20,5 @@ public class Registry
 
     // Event dispatchers and handlers
     public static final BlockPlacementPositionHandler BLOCK_PLACEMENT_POSITION_HANDLER = new BlockPlacementPositionHandler();
+    public static final ConfigScreenRegistry CONFIG_SCREEN = new ConfigScreenRegistry();
 }
