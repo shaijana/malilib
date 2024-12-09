@@ -144,7 +144,7 @@ public class RenderEventHandler implements IRenderDispatcher
         {
             Handle<Framebuffer> handleMain;
             //Handle<Framebuffer> handleTranslucent;
-            RenderPass renderPass = frameGraphBuilder.createPass(MaLiLibReference.MOD_ID);
+            RenderPass renderPass = frameGraphBuilder.createPass(MaLiLibReference.MOD_ID+"_pre_weather");
 
             /*
             if (fbSet.translucentFramebuffer != null)
@@ -216,7 +216,7 @@ public class RenderEventHandler implements IRenderDispatcher
         {
             Handle<Framebuffer> handleMain;
             //Handle<Framebuffer> handleTranslucent;
-            RenderPass renderPass = frameGraphBuilder.createPass(MaLiLibReference.MOD_ID);
+            RenderPass renderPass = frameGraphBuilder.createPass(MaLiLibReference.MOD_ID+"_world_last");
 
             // Don't write to translucent Frame Buffer, bad things will happen,
             //  at Best, the Player will be able to see through objects ...
