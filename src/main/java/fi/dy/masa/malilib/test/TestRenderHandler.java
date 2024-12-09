@@ -29,6 +29,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.profiler.Profiler;
+import net.minecraft.util.profiler.Profilers;
 
 import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.MaLiLibConfigs;
@@ -46,7 +47,8 @@ public class TestRenderHandler implements IRenderer
     {
         if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() && GuiBase.isAltDown())
         {
-            profiler.push(this.getProfilerSectionSupplier() + "_render_overlay");
+            profiler.push(MaLiLibReference.MOD_ID + "_inventory_overlay");
+
             //renderInventoryOverlay(mc, drawContext);
             InventoryOverlay.Context context = RayTraceUtils.getTargetInventory(mc);
 
@@ -54,6 +56,7 @@ public class TestRenderHandler implements IRenderer
             {
                 renderInventoryOverlay(context, drawContext);
             }
+
             profiler.pop();
         }
     }
@@ -65,7 +68,7 @@ public class TestRenderHandler implements IRenderer
 
         if (mc.player != null)
         {
-            profiler.push(this.getProfilerSectionSupplier() + "_render_targeting_overlay");
+            profiler.push(MaLiLibReference.MOD_ID + "_targeting_overlay");
             this.renderTargetingOverlay(posMatrix, mc);
             profiler.pop();
         }
@@ -78,18 +81,18 @@ public class TestRenderHandler implements IRenderer
         {
             MinecraftClient mc = MinecraftClient.getInstance();
 
-            profiler.push(this.getProfilerSectionSupplier() + "_test_walls");
+            profiler.push(MaLiLibReference.MOD_ID + "_test_walls");
+
             if (TestEnumConfig.TEST_WALLS_HOTKEY.getBooleanValue())
             {
                 if (TestWalls.needsUpdate(camera.getBlockPos()))
                 {
-                    profiler.swap(this.getProfilerSectionSupplier() + "_test_walls_update");
                     TestWalls.update(camera, mc);
                 }
 
-                profiler.swap(this.getProfilerSectionSupplier() + "_test_walls_draw");
                 TestWalls.draw(camera.getPos(), posMatrix, projMatrix, mc, profiler);
             }
+
             profiler.pop();
         }
     }
@@ -98,26 +101,33 @@ public class TestRenderHandler implements IRenderer
     public void onRenderTooltipLast(DrawContext drawContext, ItemStack stack, int x, int y)
     {
         Item item = stack.getItem();
+        Profiler profiler = Profilers.get();
 
         if (item instanceof FilledMapItem)
         {
             if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() && GuiBase.isShiftDown())
             {
+                profiler.push(MaLiLibReference.MOD_ID + "_map_preview");
                 RenderUtils.renderMapPreview(stack, x, y, 160, false, drawContext);
+                profiler.pop();
             }
         }
         else if (stack.getComponents().contains(DataComponentTypes.CONTAINER) && InventoryUtils.shulkerBoxHasItems(stack))
         {
             if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() && GuiBase.isShiftDown())
             {
+                profiler.push(MaLiLibReference.MOD_ID + "_shulker_preview");
                 RenderUtils.renderShulkerBoxPreview(stack, x, y, true, drawContext);
+                profiler.pop();
             }
         }
         else if (stack.getComponents().contains(DataComponentTypes.BUNDLE_CONTENTS) && InventoryUtils.bundleHasItems(stack))
         {
             if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() && GuiBase.isShiftDown())
             {
+                profiler.push(MaLiLibReference.MOD_ID + "_bundle_preview");
                 RenderUtils.renderBundlePreview(stack, x, y, true, drawContext);
+                profiler.pop();
             }
         }
     }
@@ -125,7 +135,7 @@ public class TestRenderHandler implements IRenderer
     @Override
     public Supplier<String> getProfilerSectionSupplier()
     {
-        return () -> MaLiLibReference.MOD_ID + "_test_render";
+        return () -> MaLiLibReference.MOD_ID + "_test";
     }
 
     private void renderTargetingOverlay(Matrix4f posMatrix, MinecraftClient mc)
