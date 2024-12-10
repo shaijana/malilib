@@ -12,10 +12,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
 
+import fi.dy.masa.malilib.util.nbt.NbtEntityUtils;
+
 /**
  * Consider Migrating to util/nbt/NbtEntityUtils
  */
-public class EntityUtils
+public class EntityUtils extends NbtEntityUtils
 {
     /**
      * Returns the camera entity, if it's not null, otherwise returns the client player entity.

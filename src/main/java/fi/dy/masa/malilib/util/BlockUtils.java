@@ -1,45 +1,25 @@
 package fi.dy.masa.malilib.util;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import com.llamalad7.mixinextras.lib.apache.commons.tuple.Pair;
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.*;
 import net.minecraft.block.enums.Orientation;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.*;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.event.Vibrations;
 
 import fi.dy.masa.malilib.gui.GuiBase;
-import fi.dy.masa.malilib.util.nbt.NbtKeys;
-import fi.dy.masa.malilib.util.nbt.NbtUtils;
+import fi.dy.masa.malilib.util.nbt.NbtBlockUtils;
 
 /**
  * Consider Migrating to util/game/BlockUtils or util/nbt/NbtBlockUtils
  */
-public class BlockUtils
+public class BlockUtils extends NbtBlockUtils
 {
     /**
      * Returns the first PropertyDirection property from the provided state, if any.
