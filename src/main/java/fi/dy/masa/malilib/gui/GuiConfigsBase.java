@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.client.gui.screen.Screen;
 
 import fi.dy.masa.malilib.MaLiLib;
+import fi.dy.masa.malilib.MaLiLibConfigs;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.gui.ButtonPressDirtyListenerSimple;
@@ -68,7 +69,7 @@ public abstract class GuiConfigsBase extends GuiListBase<ConfigOptionWrapper, Wi
                 return;
             }
         }
-        if (thisMod != null)
+        if (thisMod != null && MaLiLibConfigs.Generic.ENABLE_CONFIG_SWITCHER.getBooleanValue())
         {
             modSwitchWidget = new WidgetDropDownList<>(GuiUtils.getScaledWindowWidth() - 155, 13, 130, 18, 200, 10, Registry.CONFIG_SCREEN.getAllModsWithConfigScreens())
             {
