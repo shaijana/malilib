@@ -166,6 +166,13 @@
   "malilib.label.block_rotation.rotate_180": "+180",
   "malilib.label.block_rotation.rotate_270": "-90",
   "malilib.label.block_rotation.rotate_90": "+90",
+  "malilib.label.block_state_properties.boolean.false": "%s%s§c%s§r",
+  "malilib.label.block_state_properties.boolean.true": "%s%s§a%s§r",
+  "malilib.label.block_state_properties.direction": "%s%s§6%s§r",
+  "malilib.label.block_state_properties.enum": "%s%s§3%s§r",
+  "malilib.label.block_state_properties.generic": "%s%s%s",
+  "malilib.label.block_state_properties.integer": "%s%s§b%s§r",
+  "malilib.label.block_state_properties.orientation": "%s%s§d%s§r",
   "malilib.label.config_comment.single_player_only": "§6Nota: Esta función funciona completamente solo en un jugador§r\n§6o al menos funciona mejor en un solo jugador§r",
   "malilib.label.key_action.both": "AMBOS",
   "malilib.label.key_action.press": "PRESIONAR",
@@ -179,6 +186,10 @@
   "malilib.label.message_output_type.actionbar": "Barra de acciones",
   "malilib.label.message_output_type.message": "Mensaje",
   "malilib.label.message_output_type.none": "Ninguno",
+  "malilib.label.nbt_tooltip.key_color": "§b",
+  "malilib.label.nbt_tooltip.number_color": "§6",
+  "malilib.label.nbt_tooltip.number_type_color": "§c",
+  "malilib.label.nbt_tooltip.string_color": "§a",
   "malilib.message.directory_created": "Directorio '%s' creado",
   "malilib.message.error.failed_to_copy_file": "Failed to copy file\n  §e'%s'§r\nto\n  §e'%s'§r",
   "malilib.message.error.failed_to_copy_file.destination_exists": "Won't copy file §e'%s'§r\nto §e'%s'§r,\nthe destination file already exists",
@@ -216,5 +227,6 @@
   "malilib.message.value.off": "APAGADO",
   "malilib.message.value.on": "ENCENDIDO",
   "malilib.name.file_write_type.normal_write": "Normal Write",
-  "malilib.name.file_write_type.temp_and_rename": "Temp and Rename"
+  "malilib.name.file_write_type.temp_and_rename": "Temp and Rename",
+  "modmenu.descriptionTranslation.malilib": "A library required by client mods from masa"
 }

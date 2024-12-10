@@ -227,5 +227,6 @@
   "malilib.message.value.off": "OFF",
   "malilib.message.value.on": "ON",
   "malilib.name.file_write_type.normal_write": "Normal Write",
-  "malilib.name.file_write_type.temp_and_rename": "Temp and Rename"
+  "malilib.name.file_write_type.temp_and_rename": "Temp and Rename",
+  "modmenu.descriptionTranslation.malilib": "A library required by client mods from masa"
 }

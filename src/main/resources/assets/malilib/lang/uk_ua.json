@@ -1,5 +1,4 @@
 {
-  "modmenu.descriptionTranslation.malilib": "Бібліотка, необхідна клієнтським модам від masa",
   "malilib.config.comment.keybind_settings.activate_on": "Чи активується прив’язка клавіш після натискання або відпускання комбінації клавіш",
   "malilib.config.comment.keybind_settings.allow_empty_keybind": "Чи дійсна порожня прив'язка клавіш\n(завжди вважатиметься активною)",
   "malilib.config.comment.keybind_settings.allow_extra_keys": "Чи можна утримувати додаткові клавіші для активації прив'язки клавіш",
@@ -167,6 +166,13 @@
   "malilib.label.block_rotation.rotate_180": "+180",
   "malilib.label.block_rotation.rotate_270": "-90",
   "malilib.label.block_rotation.rotate_90": "+90",
+  "malilib.label.block_state_properties.boolean.false": "%s%s§c%s§r",
+  "malilib.label.block_state_properties.boolean.true": "%s%s§a%s§r",
+  "malilib.label.block_state_properties.direction": "%s%s§6%s§r",
+  "malilib.label.block_state_properties.enum": "%s%s§3%s§r",
+  "malilib.label.block_state_properties.generic": "%s%s%s",
+  "malilib.label.block_state_properties.integer": "%s%s§b%s§r",
+  "malilib.label.block_state_properties.orientation": "%s%s§d%s§r",
   "malilib.label.config_comment.single_player_only": "§6Примітка: ця функція працює або взагалі, або§r\n§6принаймні повністю лише в грі наодинці§r",
   "malilib.label.key_action.both": "ОБИДВА",
   "malilib.label.key_action.press": "ПРЕС",
@@ -180,6 +186,10 @@
   "malilib.label.message_output_type.actionbar": "Панель дій",
   "malilib.label.message_output_type.message": "Повідомлення",
   "malilib.label.message_output_type.none": "Нічого",
+  "malilib.label.nbt_tooltip.key_color": "§b",
+  "malilib.label.nbt_tooltip.number_color": "§6",
+  "malilib.label.nbt_tooltip.number_type_color": "§c",
+  "malilib.label.nbt_tooltip.string_color": "§a",
   "malilib.message.directory_created": "Створено каталог «%s»",
   "malilib.message.error.failed_to_copy_file": "Не вдалося скопіювати файл\n §e«%s»§r\nу\n §e«%s»§r",
   "malilib.message.error.failed_to_copy_file.destination_exists": "Не буде скопійовано файл §e«%s»§r\nу §e«%s»§r,\nфайл призначення вже існує",
@@ -187,7 +197,7 @@
   "malilib.message.error.failed_to_delete_file": "Не вдалося видалити\n §e«%s»§r",
   "malilib.message.error.failed_to_delete_file_is_dir": "Не буде видалено\n §e«%s»§r\na, оскільки це каталог",
   "malilib.message.error.failed_to_move_file": "Не вдалося перемістити файл\n §e«%s»§r\nдо\n §e«%s»§r",
-  "malilib.message.error.failed_to_move_file.destination_exists": "Не буде переміщено файл\n §e«%s»§r\nдо\n §e«%s»§r,\naоскільки файл призначення вже існує FOO" ,
+  "malilib.message.error.failed_to_move_file.destination_exists": "Не буде переміщено файл\n §e«%s»§r\nдо\n §e«%s»§r,\naоскільки файл призначення вже існує FOO",
   "malilib.message.error.failed_to_parse_string_as_json": "Не вдалося проаналізувати рядок як JSON",
   "malilib.message.error.failed_to_rename_file.exception": "Не вдалося перейменувати файл\n §e«%s»§r\nна\n §e«%s»§r,\nвиняток: %s",
   "malilib.message.error.failed_to_rename_file.exists": "Не вдалося перейменувати файл\n §e«%s»§r\nна\n §e«%s»§r\nцільовий файл уже існує",
@@ -217,5 +227,6 @@
   "malilib.message.value.off": "ВИМК.",
   "malilib.message.value.on": "УВІМК.",
   "malilib.name.file_write_type.normal_write": "Нормальне писання",
-  "malilib.name.file_write_type.temp_and_rename": "Темп і перейменування"
+  "malilib.name.file_write_type.temp_and_rename": "Темп і перейменування",
+  "modmenu.descriptionTranslation.malilib": "Бібліотка, необхідна клієнтським модам від masa"
 }
