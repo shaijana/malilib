@@ -1,16 +1,13 @@
 package fi.dy.masa.malilib.util.data;
 
-import fi.dy.masa.malilib.gui.GuiBase;
-import net.minecraft.client.gui.screen.Screen;
-import org.jetbrains.annotations.ApiStatus;
-
-import javax.annotation.Nullable;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
+
+import fi.dy.masa.malilib.gui.GuiBase;
 
 /**
  * Post-ReWrite code
  */
-@ApiStatus.Experimental
 public class ModInfo
 {
     public static final ModInfo NO_MOD = new ModInfo("-", "-");
