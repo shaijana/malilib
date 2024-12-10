@@ -49,6 +49,7 @@ import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.mixin.IMixinDrawContext;
 import fi.dy.masa.malilib.util.*;
 import fi.dy.masa.malilib.util.PositionUtils.HitPart;
+import fi.dy.masa.malilib.util.nbt.NbtBlockUtils;
 
 public class RenderUtils
 {
@@ -1375,7 +1376,7 @@ public class RenderUtils
 
             if (type == InventoryOverlay.InventoryRenderType.CRAFTER && !nbt.isEmpty())
             {
-                lockedSlots = BlockUtils.getDisabledSlotsFromNbt(nbt);
+                lockedSlots = NbtBlockUtils.getDisabledSlotsFromNbt(nbt);
                 InventoryOverlay.renderInventoryStacks(type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, -1, lockedSlots, mc(), drawContext);
             }
             else

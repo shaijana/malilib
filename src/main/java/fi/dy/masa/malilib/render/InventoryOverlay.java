@@ -7,18 +7,13 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import com.mojang.blaze3d.systems.RenderSystem;
-import fi.dy.masa.malilib.MaLiLib;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -41,7 +36,6 @@ import net.minecraft.item.*;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
@@ -51,9 +45,11 @@ import net.minecraft.world.World;
 
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.mixin.IMixinAbstractHorseEntity;
-import fi.dy.masa.malilib.mixin.IMixinDrawContext;
 import fi.dy.masa.malilib.mixin.IMixinPiglinEntity;
 import fi.dy.masa.malilib.util.*;
+import fi.dy.masa.malilib.util.nbt.NbtBlockUtils;
+import fi.dy.masa.malilib.util.nbt.NbtEntityUtils;
+import fi.dy.masa.malilib.util.nbt.NbtKeys;
 
 public class InventoryOverlay
 {
@@ -529,7 +525,7 @@ public class InventoryOverlay
      */
     public static InventoryRenderType getInventoryType(@Nonnull NbtCompound nbt)
     {
-        BlockEntityType<?> blockType = BlockUtils.getBlockEntityTypeFromNbt(nbt);
+        BlockEntityType<?> blockType = NbtBlockUtils.getBlockEntityTypeFromNbt(nbt);
 
         if (blockType != null)
         {
@@ -589,7 +585,7 @@ public class InventoryOverlay
             }
         }
 
-        EntityType<?> entityType = EntityUtils.getEntityTypeFromNbt(nbt);
+        EntityType<?> entityType = NbtEntityUtils.getEntityTypeFromNbt(nbt);
 
         if (entityType != null)
         {
