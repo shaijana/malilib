@@ -141,13 +141,13 @@ public class NbtBlockUtils
         List<BeehiveBlockEntity.BeeData> bees = new ArrayList<>();
         BlockPos flower = BlockPos.ORIGIN;
 
-        if (nbt.contains(NbtKeys.FLOWER))
-        {
-            flower = NbtUtils.readBlockPosFromIntArray(nbt, NbtKeys.FLOWER);
-        }
-        if (nbt.contains(NbtKeys.BEES, Constants.NBT.TAG_LIST))
+        if (nbt.contains(NbtKeys.BEES))
         {
             BeehiveBlockEntity.BeeData.LIST_CODEC.parse(NbtOps.INSTANCE, nbt.get(NbtKeys.BEES)).resultOrPartial().ifPresent(bees::addAll);
+        }
+        if (nbt.contains(NbtKeys.FLOWER, Constants.NBT.TAG_INT_ARRAY))
+        {
+            flower = NbtUtils.readBlockPosFromIntArray(nbt, NbtKeys.FLOWER);
         }
 
         return Pair.of(bees, flower);
@@ -308,5 +308,15 @@ public class NbtBlockUtils
         }
 
         return list;
+    }
+
+    public static int getOutputSignalFromNbt(@Nonnull NbtCompound nbt)
+    {
+        if (nbt.contains(NbtKeys.OUTPUT_SIGNAL, Constants.NBT.TAG_INT))
+        {
+            return nbt.getInt(NbtKeys.OUTPUT_SIGNAL);
+        }
+
+        return 0;
     }
 }
