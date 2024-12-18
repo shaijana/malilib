@@ -1035,7 +1035,7 @@ public class InventoryOverlay
         RenderUtils.color(1f, 1f, 1f, 1f);
         matrixStack.pop();
 
-        System.out.printf("renderStackAt(): %s\n", stack.toNbt(GameWrap.getClientRegistryManager()));
+        System.out.printf("renderStackAt(): [%s]\n", stack.toNbt(WorldUtils.getBestWorld(GameWrap.getClient()).getRegistryManager()).toString());
 
         if (mouseX >= x && mouseX < x + 16 * scale && mouseY >= y && mouseY < y + 16 * scale)
         {
@@ -1166,7 +1166,7 @@ public class InventoryOverlay
             return;
         }
 
-        System.out.printf("dumpStack(): [%s]\n", stack.toNbt(GameWrap.getClientRegistryManager()).toString());
+        System.out.printf("dumpStack(): [%s]\n", stack.toNbt(WorldUtils.getBestWorld(GameWrap.getClient()).getRegistryManager()).toString());
 
         if (list != null && !list.isEmpty())
         {
@@ -1174,7 +1174,7 @@ public class InventoryOverlay
 
             for (Text entry : list)
             {
-                System.out.printf("dumpTooltip[%d]: %s\n", i, entry.getString());
+                System.out.printf("ToolTip[%d]: %s\n", i, entry.getString());
                 i++;
             }
         }
