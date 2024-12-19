@@ -2,7 +2,6 @@ package fi.dy.masa.malilib.util;
 
 import java.util.Iterator;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,6 +48,7 @@ import net.minecraft.world.World;
 
 import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.mixin.IMixinPlayerEntity;
+import fi.dy.masa.malilib.util.nbt.NbtKeys;
 
 public class InventoryUtils
 {
@@ -297,7 +297,7 @@ public class InventoryUtils
 
         if (isCreative)
         {
-            player.getInventory().addPickBlock(stackReference);
+            player.getInventory().swapStackWithHotbar(stackReference);
             mc.interactionManager.clickCreativeStack(player.getMainHandStack(), 36 + player.getInventory().selectedSlot); // sendSlotPacket
             return true;
         }
@@ -397,20 +397,63 @@ public class InventoryUtils
     }
 
     /**
-     * Checks if the given NBT currently contains any items, using the NBT Items[] interface.
+     * Returns item represented as NBT if the ItemStack has NBT Items present.
      *
-     * @param tag
+     * @param stack
+     * @param registry
      * @return
      */
-    public static boolean hasNbtItems(NbtCompound tag)
+    public static @Nullable NbtCompound stackHasNbtItems(ItemStack stack, @Nonnull DynamicRegistryManager registry)
     {
-        if (tag.contains(NbtKeys.ITEMS, Constants.NBT.TAG_COMPOUND))
+        if (stack.isEmpty() == false)
         {
-            NbtList tagList = tag.getList(NbtKeys.ITEMS, Constants.NBT.TAG_COMPOUND);
-            return !tagList.isEmpty();
+            NbtCompound nbt = (NbtCompound) stack.toNbt(registry);
+
+            if (hasNbtItems(nbt))
+            {
+                return nbt;
+            }
         }
 
-        return false;
+        return null;
+    }
+
+    /**
+     * Checks if the given NBT currently contains any items, using the NBT Items[] interface.
+     *
+     * @param nbt
+     * @return
+     */
+    public static boolean hasNbtItems(NbtCompound nbt)
+    {
+        if (nbt.contains(NbtKeys.ITEMS, Constants.NBT.TAG_COMPOUND))
+        {
+            NbtList tagList = nbt.getList(NbtKeys.ITEMS, Constants.NBT.TAG_COMPOUND);
+            return !tagList.isEmpty();
+        }
+        else if (nbt.contains(NbtKeys.INVENTORY, Constants.NBT.TAG_LIST))
+        {
+            NbtList tagList = nbt.getList(NbtKeys.INVENTORY, Constants.NBT.TAG_COMPOUND);
+            return !tagList.isEmpty();
+        }
+        else if (nbt.contains(NbtKeys.ENDER_ITEMS, Constants.NBT.TAG_LIST))
+        {
+            NbtList tagList = nbt.getList(NbtKeys.ENDER_ITEMS, Constants.NBT.TAG_COMPOUND);
+            return !tagList.isEmpty();
+        }
+        else if (nbt.contains(NbtKeys.ITEM))
+        {
+            return true;
+        }
+        else if (nbt.contains(NbtKeys.ITEM_2))
+        {
+            return true;
+        }
+        else if (nbt.contains(NbtKeys.BOOK))
+        {
+            return true;
+        }
+        else return nbt.contains(NbtKeys.RECORD);
     }
 
     /**
@@ -473,12 +516,8 @@ public class InventoryUtils
 
             for (int i = 0; i < list.size(); i++)
             {
-                Optional<ItemStack> opt = ItemStack.fromNbt(registry, list.getCompound(i));
-
-                if (opt.isPresent())
-                {
-                    items.add(opt.get());
-                }
+                final int index = i;
+                ItemStack.fromNbt(registry, list.getCompound(i)).ifPresent(itemStack -> items.set(index, itemStack));
             }
             
             return items;
@@ -490,57 +529,22 @@ public class InventoryUtils
 
             if (slotCount < 0)
             {
-                slotCount = list.size();
+                slotCount = 27;
             }
 
             DefaultedList<ItemStack> items = DefaultedList.ofSize(slotCount, ItemStack.EMPTY);
 
             for (int i = 0; i < list.size(); i++)
             {
-                Optional<ItemStack> opt = ItemStack.fromNbt(registry, list.getCompound(i));
+                NbtCompound entry = list.getCompound(i);
+                int slot = entry.getByte(NbtKeys.SLOT) & 255;
 
-                if (opt.isPresent())
+                if (slot < items.size())
                 {
-                    items.add(opt.get());
+                    items.set(slot, ItemStack.fromNbt(registry, entry).orElse(ItemStack.EMPTY));
                 }
             }
             
-            return items;
-        }
-        else if (nbt.contains(NbtKeys.ITEM))
-        {
-            // item (DecoratedPot, ItemEntity)
-            ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.ITEM));
-            DefaultedList<ItemStack> items = DefaultedList.ofSize(1, ItemStack.EMPTY);
-            items.add(0, entry);
-
-            return items;
-        }
-        else if (nbt.contains(NbtKeys.ITEM_2))
-        {
-            // Item (ItemFrame)
-            ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.ITEM_2));
-            DefaultedList<ItemStack> items = DefaultedList.ofSize(1, ItemStack.EMPTY);
-            items.add(0, entry);
-
-            return items;
-        }
-        else if (nbt.contains(NbtKeys.BOOK))
-        {
-            // Book (Lectern)
-            ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.BOOK));
-            DefaultedList<ItemStack> items = DefaultedList.ofSize(1, ItemStack.EMPTY);
-            items.add(0, entry);
-
-            return items;
-        }
-        else if (nbt.contains(NbtKeys.RECORD))
-        {
-            // RecordItem (Jukebox)
-            ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.RECORD));
-            DefaultedList<ItemStack> items = DefaultedList.ofSize(1, ItemStack.EMPTY);
-            items.add(0, entry);
-
             return items;
         }
         else if (nbt.contains(NbtKeys.ITEM))
@@ -636,7 +640,7 @@ public class InventoryUtils
             }
             for (int i = 0; i < slotCount; i++)
             {
-                inv.setStack(i, items.get(i));
+                inv.setStack(i, items.get(i).copy());
             }
 
             return inv;
@@ -674,7 +678,7 @@ public class InventoryUtils
             // item (DecoratedPot, ItemEntity)
             ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.ITEM));
             SimpleInventory inv = new SimpleInventory(1);
-            inv.setStack(0, entry);
+            inv.setStack(0, entry.copy());
 
             return inv;
         }
@@ -683,7 +687,7 @@ public class InventoryUtils
             // Item (Item Frame)
             ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.ITEM_2));
             SimpleInventory inv = new SimpleInventory(1);
-            inv.setStack(0, entry);
+            inv.setStack(0, entry.copy());
 
             return inv;
         }
@@ -692,7 +696,7 @@ public class InventoryUtils
             // Book (Lectern)
             ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.BOOK));
             SimpleInventory inv = new SimpleInventory(1);
-            inv.setStack(0, entry);
+            inv.setStack(0, entry.copy());
 
             return inv;
         }
@@ -701,7 +705,7 @@ public class InventoryUtils
             // RecordItem (Jukebox)
             ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.RECORD));
             SimpleInventory inv = new SimpleInventory(1);
-            inv.setStack(0, entry);
+            inv.setStack(0, entry.copy());
 
             return inv;
         }
@@ -750,7 +754,7 @@ public class InventoryUtils
             {
                 return null;
             }
-            inv.setStack(0, saddle);
+            inv.setStack(0, saddle.copy());
             for (int i = 0; i < slotCount; i++)
             {
                 inv.setStack(i + 1, items.get(i));
@@ -762,7 +766,7 @@ public class InventoryUtils
         else if (!saddle.isEmpty())
         {
             SimpleInventory inv = new SimpleInventory(1);
-            inv.setStack(0, saddle);
+            inv.setStack(0, saddle.copy());
 
             return inv;
         }
@@ -771,7 +775,7 @@ public class InventoryUtils
             // item (DecoratedPot, ItemEntity)
             ItemStack entry = ItemStack.fromNbtOrEmpty(registry, nbt.getCompound(NbtKeys.ITEM));
             SimpleInventory inv = new SimpleInventory(1);
-            inv.setStack(0, entry);
+            inv.setStack(0, entry.copy());
         }
 
         return null;
@@ -791,7 +795,7 @@ public class InventoryUtils
     @Nullable
     public static EnderChestInventory getPlayerEnderItemsFromNbt(@Nonnull NbtCompound nbt, @Nonnull RegistryWrapper.WrapperLookup registry)
     {
-        if (nbt.contains(NbtKeys.ENDER_ITEMS, Constants.NBT.TAG_COMPOUND))
+        if (nbt.contains(NbtKeys.ENDER_ITEMS, Constants.NBT.TAG_LIST))
         {
             EnderChestInventory inv = new EnderChestInventory();
             inv.readNbtList(nbt.getList(NbtKeys.ENDER_ITEMS, Constants.NBT.TAG_COMPOUND), registry);
@@ -959,7 +963,7 @@ public class InventoryUtils
 
                 if (slot.isEmpty() == false)
                 {
-                    items.add(slot);
+                    items.add(slot.copy());
                 }
             }
 
@@ -999,7 +1003,7 @@ public class InventoryUtils
 
             while (iter.hasNext() && limit < maxSlots)
             {
-                items.add(iter.next());
+                items.add(iter.next().copy());
                 limit++;
             }
 
@@ -1201,7 +1205,7 @@ public class InventoryUtils
                 }
                 else
                 {
-                    MaLiLib.logger.warn(StringUtils.translate("malilib.error.invalid_item_stack_entry.string", itemName));
+                    MaLiLib.LOGGER.warn(StringUtils.translate("malilib.error.invalid_item_stack_entry.string", itemName));
                 }
             }
         }
@@ -1228,7 +1232,7 @@ public class InventoryUtils
         }
         catch (CommandSyntaxException e)
         {
-            MaLiLib.logger.warn(StringUtils.translate("malilib.error.invalid_item_stack_entry.nbt_syntax", stringIn));
+            MaLiLib.LOGGER.warn(StringUtils.translate("malilib.error.invalid_item_stack_entry.nbt_syntax", stringIn));
             return null;
         }
 

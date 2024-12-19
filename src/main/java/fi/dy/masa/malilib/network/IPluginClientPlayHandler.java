@@ -83,14 +83,14 @@ public interface IPluginClientPlayHandler<T extends CustomPayload> extends Clien
             }
             catch (IllegalArgumentException e)
             {
-                MaLiLib.logger.error("registerPlayPayload: channel ID [{}] is is already registered", this.getPayloadChannel());
+                MaLiLib.LOGGER.error("registerPlayPayload: channel ID [{}] is is already registered", this.getPayloadChannel());
             }
 
             this.setPlayRegistered(this.getPayloadChannel());
             return;
         }
 
-        MaLiLib.logger.error("registerPlayPayload: channel ID [{}] is invalid, or it is already registered", this.getPayloadChannel());
+        MaLiLib.LOGGER.error("registerPlayPayload: channel ID [{}] is invalid, or it is already registered", this.getPayloadChannel());
     }
 
     /**
@@ -113,12 +113,12 @@ public interface IPluginClientPlayHandler<T extends CustomPayload> extends Clien
             }
             catch (IllegalArgumentException e)
             {
-                MaLiLib.logger.error("registerPlayReceiver: Channel ID [{}] payload has not been registered", this.getPayloadChannel());
+                MaLiLib.LOGGER.error("registerPlayReceiver: Channel ID [{}] payload has not been registered", this.getPayloadChannel());
                 return false;
             }
         }
 
-        MaLiLib.logger.error("registerPlayReceiver: Channel ID [{}] is invalid, or not registered", this.getPayloadChannel());
+        MaLiLib.LOGGER.error("registerPlayReceiver: Channel ID [{}] is invalid, or not registered", this.getPayloadChannel());
         return false;
     }
 
@@ -200,7 +200,7 @@ public interface IPluginClientPlayHandler<T extends CustomPayload> extends Clien
         }
         else
         {
-            MaLiLib.logger.warn("sendPlayPayload: [Fabric-API] error sending payload for channel: {}, check if channel is registered", payload.getId().id().toString());
+            MaLiLib.LOGGER.warn("sendPlayPayload: [Fabric-API] error sending payload for channel: {}, check if channel is registered", payload.getId().id().toString());
         }
 
         return false;
@@ -226,7 +226,7 @@ public interface IPluginClientPlayHandler<T extends CustomPayload> extends Clien
         }
         else
         {
-            MaLiLib.logger.warn("sendPlayPayload: [NetworkHandler] error sending payload for channel: {}, check if channel is registered", payload.getId().id().toString());
+            MaLiLib.LOGGER.warn("sendPlayPayload: [NetworkHandler] error sending payload for channel: {}, check if channel is registered", payload.getId().id().toString());
         }
 
         return false;
