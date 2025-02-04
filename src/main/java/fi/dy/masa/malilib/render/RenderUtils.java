@@ -232,7 +232,7 @@ public class RenderUtils
         }
         catch (Exception ignored) { }
 
-        RenderSystem.disableBlend();
+        //RenderSystem.disableBlend();
     }
 
     /**
@@ -427,7 +427,7 @@ public class RenderUtils
             drawContext.getMatrices().pop();
             //RenderSystem.applyModelViewMatrix();
 
-            //RenderSystem.enableDepthTest();
+            //RenderSystem.disableDepthTest();
             //enableDiffuseLightingGui3D();
         }
     }
@@ -953,7 +953,7 @@ public class RenderUtils
 
         if (disableDepth)
         {
-            RenderSystem.depthMask(false);
+            //RenderSystem.depthMask(false);
             RenderSystem.disableDepthTest();
         }
 
@@ -986,13 +986,13 @@ public class RenderUtils
         {
             if (disableDepth)
             {
-                RenderSystem.depthMask(false);
+                //RenderSystem.depthMask(false);
                 RenderSystem.disableDepthTest();
                 VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(new BufferAllocator(RenderLayer.DEFAULT_BUFFER_SIZE));
                 textRenderer.draw(line, -strLenHalf, textY, 0x20000000 | (textColor & 0xFFFFFF), false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
                 immediate.draw();
                 RenderSystem.enableDepthTest();
-                RenderSystem.depthMask(true);
+                //RenderSystem.depthMask(true);
             }
 
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(new BufferAllocator(RenderLayer.DEFAULT_BUFFER_SIZE));
@@ -1009,7 +1009,7 @@ public class RenderUtils
 
         color(1f, 1f, 1f, 1f);
         RenderSystem.enableCull();
-        RenderSystem.disableBlend();
+        //RenderSystem.disableBlend();
         global4fStack.popMatrix();
     }
 
