@@ -288,6 +288,12 @@ public class RenderUtils
         drawTexturedRect(texture, x, y, u, v, width, height, 0F, -1, drawContext);
     }
 
+    public static void drawTexturedRectAndDraw(Identifier texture, int x, int y, int u, int v, int width, int height, DrawContext drawContext)
+    {
+        drawTexturedRect(texture, x, y, u, v, width, height, 0F, -1, drawContext);
+        forceDraw(drawContext);
+    }
+
     /**
      * New DrawContext-based Textured Rect method.  Use this when the original method fails.
      *
@@ -304,6 +310,12 @@ public class RenderUtils
     public static void drawTexturedRect(Identifier texture, int x, int y, int u, int v, int width, int height, float zLevel, DrawContext drawContext)
     {
         drawTexturedRect(texture, x, y, u, v, width, height, zLevel, -1, drawContext);
+    }
+
+    public static void drawTexturedRectAndDraw(Identifier texture, int x, int y, int u, int v, int width, int height, float zLevel, DrawContext drawContext)
+    {
+        drawTexturedRect(texture, x, y, u, v, width, height, zLevel, -1, drawContext);
+        forceDraw(drawContext);
     }
 
     /**
@@ -334,7 +346,7 @@ public class RenderUtils
         vertexConsumer.vertex(matrix4f, x + width  , y            , zLevel).texture((u + width) * pixelWidth,  v           * pixelWidth).color(argb);
         vertexConsumer.vertex(matrix4f, x             , y            , zLevel).texture( u          * pixelWidth,  v           * pixelWidth).color(argb);
 
-        forceDraw(drawContext);
+        //forceDraw(drawContext);
     }
 
     public static void drawTexturedRectBatched(int x, int y, int u, int v, int width, int height, BufferBuilder buffer)
