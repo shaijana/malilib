@@ -35,5 +35,11 @@
 		"minecraft": "1.21.4",
 		"fabric-networking-api-v1": ">=4.3.7",
 		"fabric-resource-loader-v0": "*"
+	},
+	"breaks": {
+		"itemscroller": "<0.26.2",
+		"litematica": "<0.21.2",
+		"minihud": "<0.34.4",
+		"tweakeroo": "<0.23.2"
 	}
 }
