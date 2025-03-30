@@ -28,7 +28,7 @@ public interface IRenderDispatcher
      * method called after the vanilla Debug rendering is done
      * @param renderer
      */
-    void registerWorldLayerPassRenderer(IRenderer renderer);
+//    void registerWorldLayerPassRenderer(IRenderer renderer);
 
     /**
      * Registers a renderer which will have its {@link IRenderer.onRenderWorldPostDebugRender}

@@ -1,7 +1,5 @@
 package fi.dy.masa.malilib.test;
 
-import it.unimi.dsi.fastutil.objects.ObjectListIterator;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -9,7 +7,6 @@ import java.util.function.Supplier;
 import org.jetbrains.annotations.ApiStatus;
 import org.joml.Matrix4f;
 
-import com.mojang.blaze3d.systems.RenderPass;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.CrafterBlockEntity;
@@ -17,7 +14,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.chunk.ChunkBuilder;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
@@ -113,11 +109,11 @@ public class TestRenderHandler implements IRenderer
 //        }
 //    }
 
-    @Override
-    public void onRenderWorldLayerPass(RenderLayer layer, Matrix4f posMatrix, Matrix4f projMatrix, Vec3d camera, Profiler profiler, ObjectListIterator<ChunkBuilder.BuiltChunk> chunkIterator, ArrayList<RenderPass.RenderObject> renderObjects)
-    {
-        // NO-OP
-    }
+//    @Override
+//    public void onRenderWorldLayerPass(RenderLayer layer, Matrix4f posMatrix, Matrix4f projMatrix, Vec3d camera, Profiler profiler, ObjectListIterator<ChunkBuilder.BuiltChunk> chunkIterator, ArrayList<RenderPass.RenderObject> renderObjects)
+//    {
+//        // NO-OP
+//    }
 
     @Override
     public void onRenderWorldPostDebugRender(MatrixStack matrices, Frustum frustum, VertexConsumerProvider.Immediate immediate, Vec3d camera, Profiler profiler)

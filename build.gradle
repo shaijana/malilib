@@ -6,7 +6,7 @@ plugins {
 repositories {
 	maven { url = 'https://maven.terraformersmc.com/releases/' }
 	maven { url = 'https://maven.fallenbreath.me/releases' }
-	// maven { url = 'https://maven.quiltmc.org/repository/release/' }
+	maven { url = 'https://api.modrinth.com/maven' }
 }
 
 fabricApi {
@@ -32,6 +32,7 @@ dependencies {
 	modImplementation(modApi(fabricApi.module("fabric-data-generation-api-v1", project.fabric_api_version)))
 
 	modCompileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
+//	modCompileOnly "maven.modrinth:iris:${project.iris_version}+${project.minecraft_version}-fabric"
 	modRuntimeOnly 'me.fallenbreath:mixin-auditor:0.1.0'
 }
 

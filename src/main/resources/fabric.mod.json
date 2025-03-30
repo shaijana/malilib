@@ -33,16 +33,10 @@
 	"mixins": [
 		"mixins.malilib.json"
 	],
-
+	"accessWidener": "malilib.accesswidener",
 	"depends": {
-		"minecraft": ">=1.21.5-rc.1 <1.21.6",
+		"minecraft": "1.21.5",
 		"fabric-networking-api-v1": ">=4.4.0",
 		"fabric-resource-loader-v0": "*"
-	},
-	"breaks": {
-		"itemscroller": "<=0.26.1",
-		"litematica": "<=0.21.1",
-		"minihud": "<=0.34.3",
-		"tweakeroo": "<=0.23.1"
 	}
 }

@@ -30,7 +30,6 @@
         "hud.MixinInGameHud",
         "screen.MixinInventoryScreen",
         "render.MixinRenderPipelines",
-        "render.MixinWorldBorderRendering",
         "render.MixinWorldRenderer",
         "test.MixinBundleItem",
         "test.MixinClientPlayInteractionManager",

@@ -1,24 +1,18 @@
 package fi.dy.masa.malilib.interfaces;
 
-import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import it.unimi.dsi.fastutil.objects.ObjectListIterator;
-
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.chunk.ChunkBuilder;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
-import com.mojang.blaze3d.systems.RenderPass;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.*;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.profiler.Profiler;
 
 public interface IRenderer
@@ -47,9 +41,9 @@ public interface IRenderer
      * Called during each and every RenderLayer Pass of the Main World Rendering.
      * Append `renderObjects` with your additional blocks to render on this layer by passing along each 'Baked Object' per a Built Chunk (Using the chunkIterator)
      */
-    default void onRenderWorldLayerPass(RenderLayer layer, Matrix4f posMatrix, Matrix4f projMatrix, Vec3d camera, Profiler profiler,
-                                        ObjectListIterator<ChunkBuilder.BuiltChunk> chunkIterator,
-                                        ArrayList<RenderPass.RenderObject> renderObjects) {}
+//    default void onRenderWorldLayerPass(RenderLayer layer, Matrix4f posMatrix, Matrix4f projMatrix, Vec3d camera, Profiler profiler,
+//                                        ObjectListIterator<ChunkBuilder.BuiltChunk> chunkIterator,
+//                                        ArrayList<RenderPass.RenderObject> renderObjects) {}
 
     /**
      * Called after vanilla debug rendering (Chunk Borders, etc)

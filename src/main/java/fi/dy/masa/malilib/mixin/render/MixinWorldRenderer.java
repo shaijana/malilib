@@ -1,16 +1,11 @@
 package fi.dy.masa.malilib.mixin.render;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import it.unimi.dsi.fastutil.objects.ObjectListIterator;
-import java.util.ArrayList;
 import org.joml.Matrix4f;
 
-import com.mojang.blaze3d.systems.RenderPass;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.chunk.ChunkBuilder;
 import net.minecraft.client.util.ObjectAllocator;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.profiler.Profiler;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -129,15 +124,15 @@ public abstract class MixinWorldRenderer
      * so you can then inject your own using the same pipeline; or inject new drawing elements using
      * the same BuiltChunk data as vanilla.
      */
-    @Inject(method = "renderLayer",
-            at = @At(value = "INVOKE",
-                     target = "Lcom/mojang/blaze3d/systems/RenderSystem$ShapeIndexBuffer;getIndexBuffer(I)Lcom/mojang/blaze3d/buffers/GpuBuffer;",
-                     shift = At.Shift.BEFORE))
-    private void malilib_onRenderWorldLayer(RenderLayer renderLayer, double x, double y, double z,
-                                            Matrix4f viewMatrix, Matrix4f positionMatrix, CallbackInfo ci,
-                                            @Local ArrayList<RenderPass.RenderObject> arrayList,
-                                            @Local ObjectListIterator<ChunkBuilder.BuiltChunk> objectListIterator)
-    {
-        ((RenderEventHandler) RenderEventHandler.getInstance()).runRenderWorldLayerPass(renderLayer, viewMatrix, positionMatrix, new Vec3d(x, y, z), this.client, objectListIterator, arrayList);
-    }
+//    @Inject(method = "renderLayer",
+//            at = @At(value = "INVOKE",
+//                     target = "Lcom/mojang/blaze3d/systems/RenderSystem$ShapeIndexBuffer;getIndexBuffer(I)Lcom/mojang/blaze3d/buffers/GpuBuffer;",
+//                     shift = At.Shift.BEFORE))
+//    private void malilib_onRenderWorldLayer(RenderLayer renderLayer, double x, double y, double z,
+//                                            Matrix4f viewMatrix, Matrix4f positionMatrix, CallbackInfo ci,
+//                                            @Local ArrayList<RenderPass.RenderObject> arrayList,
+//                                            @Local ObjectListIterator<ChunkBuilder.BuiltChunk> objectListIterator)
+//    {
+//        ((RenderEventHandler) RenderEventHandler.getInstance()).runRenderWorldLayerPass(renderLayer, viewMatrix, positionMatrix, new Vec3d(x, y, z), this.client, objectListIterator, arrayList);
+//    }
 }

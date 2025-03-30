@@ -1305,5 +1305,8 @@ public abstract class MixinRenderPipelines
                                        .withShaderDefine("ALPHA_CUTOUT", 0.1F)
                                        .build()
                 );
+
+        // Try registering with Iris.
+        MaLiLibPipelines.registerIrisPrograms();
     }
 }
