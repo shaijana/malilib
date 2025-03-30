@@ -10,5 +10,5 @@ build.number
 Task
 .idea/
 run/
-libs/
+# libs/
 /src/main/generated/.cache/
