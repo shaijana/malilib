@@ -267,8 +267,7 @@ public class BlockTagDataGenerator extends FabricTagProvider.BlockTagProvider
                 .add(Blocks.BEE_NEST)
                 .add(Blocks.BOOKSHELF)
                 .add(Blocks.BLUE_ICE)
-                // todo 1.21.5+
-                //.add(Blocks.BUSH)
+                .add(Blocks.BUSH)
                 .add(Blocks.CAMPFIRE)
                 .add(Blocks.CHISELED_BOOKSHELF)
                 .add(Blocks.ENDER_CHEST)
@@ -292,12 +291,10 @@ public class BlockTagDataGenerator extends FabricTagProvider.BlockTagProvider
                 .add(Blocks.NETHER_SPROUTS)
                 .add(Blocks.PALE_HANGING_MOSS)
                 .add(Blocks.SHORT_GRASS)
-                // todo 1.21.5+
-                //.add(Blocks.SHORT_DRY_GRASS)
+                .add(Blocks.SHORT_DRY_GRASS)
                 .add(Blocks.SEAGRASS)
                 .add(Blocks.TALL_GRASS)
-                // todo 1.21.5+
-                //.add(Blocks.TALL_DRY_GRASS)
+                .add(Blocks.TALL_DRY_GRASS)
                 .add(Blocks.TALL_SEAGRASS)
                 .add(Blocks.TRIPWIRE)
                 .add(Blocks.TWISTING_VINES)

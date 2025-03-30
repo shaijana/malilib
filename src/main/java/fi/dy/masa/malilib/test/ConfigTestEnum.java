@@ -6,6 +6,8 @@ import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.util.StringIdentifiable;
+
 import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.config.ConfigType;
@@ -21,12 +23,15 @@ import fi.dy.masa.malilib.interfaces.IValueChangeCallback;
 import fi.dy.masa.malilib.util.StringUtils;
 
 @ApiStatus.Experimental
-public enum ConfigTestEnum implements IHotkeyTogglable, IConfigNotifiable<IConfigBoolean>
+public enum ConfigTestEnum implements IHotkeyTogglable, IConfigNotifiable<IConfigBoolean>, StringIdentifiable
 {
     TEST_ENUM_CONFIG                ("testEnumConfig",              false,""),
     TEST_ENUM_SINGLE_PLAYER         ("testEnumSinglePlayer",        false,true, ""),
-    TEST_WALLS_HOTKEY               ("testWallsHotkey",             false,"");
+    TEST_SELECTOR_HOTKEY            ("testSelectorHotkey",          false,""),
+    TEST_WALLS_HOTKEY               ("testWallsHotkey",             false,""),
+    ;
 
+    public static final StringIdentifiable.EnumCodec<ConfigTestEnum> CODEC = StringIdentifiable.createCodec(ConfigTestEnum::values);
     private final static String TEST_ENUM_KEY = MaLiLibReference.MOD_ID + ".config.test_enum";
 
     private final String name;
@@ -97,6 +102,12 @@ public enum ConfigTestEnum implements IHotkeyTogglable, IConfigNotifiable<IConfi
     private static String buildTranslateName(String name, String type)
     {
         return TEST_ENUM_KEY + "." + type + "." + name;
+    }
+
+    @Override
+    public String asString()
+    {
+        return this.name;
     }
 
     @Override
