@@ -156,8 +156,8 @@ public class TestWalls implements AutoCloseable
 
         try
         {
-            ctx.offset(new float[]{-3f, 0f, -3f});
-            ctx.draw(null, builder.endNullable(), true, false);
+//            ctx.offset(new float[]{-3f, 0f, -3f});
+            ctx.draw(null, builder.endNullable(), false, false);
             ctx.close();
         }
         catch (Exception err)
@@ -221,8 +221,8 @@ public class TestWalls implements AutoCloseable
 
     protected void preRender()
     {
-        RenderUtils.polygonOffset(-3f, -3f);
-        RenderUtils.polygonOffset(true);
+//        RenderUtils.polygonOffset(-3f, -3f);
+//        RenderUtils.polygonOffset(true);
 //        RenderUtils.blend(true);
 //        RenderSystem.lineWidth(this.glLineWidth);
 
@@ -250,8 +250,8 @@ public class TestWalls implements AutoCloseable
 //        }
 
         RenderUtils.culling(!this.useCulling);
-        RenderUtils.polygonOffset(0f, 0f);
-        RenderUtils.polygonOffset(false);
+//        RenderUtils.polygonOffset(0f, 0f);
+//        RenderUtils.polygonOffset(false);
 //        RenderUtils.color(1f, 1f, 1f, 1f);
 //        RenderUtils.blend(false);
     }
