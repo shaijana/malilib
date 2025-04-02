@@ -12,6 +12,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
@@ -132,7 +133,7 @@ public class TestWalls implements AutoCloseable
         Vec3d cameraPos = camera.getPos();
 
         // MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_NO_DEPTH_NO_CULL
-        RenderContext ctx = new RenderContext(() -> "TestWalls Quads", MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_1, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(() -> "TestWalls Quads", MaLiLibPipelines.MINIHUD_SHAPE_OFFSET, BufferUsage.STATIC_WRITE);
         BufferBuilder builder = ctx.getBuilder();
         Matrix4fStack matrix4fstack = RenderSystem.getModelViewStack();
 //        MatrixStack matrices = new MatrixStack();
@@ -157,7 +158,16 @@ public class TestWalls implements AutoCloseable
         try
         {
 //            ctx.offset(new float[]{-3f, 0f, -3f});
-            ctx.draw(null, builder.endNullable(), false, false);
+            BuiltBuffer meshData = builder.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.upload(meshData);
+                ctx.startResorting(meshData, ctx.createVertexSorter(camera));
+                ctx.drawPost();
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -188,7 +198,7 @@ public class TestWalls implements AutoCloseable
         MatrixStack matrices = new MatrixStack();
         Vec3d updatePos = this.getUpdatePosition();
 
-        this.preRender();
+//        this.preRender();
         matrix4fstack.pushMatrix();
         matrix4fstack.translate((float) (updatePos.x - cameraPos.x), (float) (updatePos.y - cameraPos.y), (float) (updatePos.z - cameraPos.z));
         matrices.push();
@@ -206,8 +216,15 @@ public class TestWalls implements AutoCloseable
 
         try
         {
-            ctx.lineWidth(this.glLineWidth);
-            ctx.draw(builder.endNullable(), true);
+            BuiltBuffer meshData = builder.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(this.glLineWidth);
+                ctx.draw(meshData, true);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -215,7 +232,7 @@ public class TestWalls implements AutoCloseable
             MaLiLib.LOGGER.error("TestWalls#renderOutlines(): Exception; {}", err.getMessage());
         }
 
-        this.postRender();
+//        this.postRender();
         profiler.pop();
     }
 
@@ -235,7 +252,7 @@ public class TestWalls implements AutoCloseable
 //            RenderUtils.depthMask(true);
 //        }
 
-        RenderUtils.culling(this.useCulling);
+//        RenderUtils.culling(this.useCulling);
     }
 
     protected void postRender()
@@ -249,7 +266,7 @@ public class TestWalls implements AutoCloseable
 //            RenderUtils.depthMask(false);
 //        }
 
-        RenderUtils.culling(!this.useCulling);
+//        RenderUtils.culling(!this.useCulling);
 //        RenderUtils.polygonOffset(0f, 0f);
 //        RenderUtils.polygonOffset(false);
 //        RenderUtils.color(1f, 1f, 1f, 1f);

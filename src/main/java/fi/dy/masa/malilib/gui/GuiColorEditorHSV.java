@@ -7,6 +7,7 @@ import com.mojang.blaze3d.buffers.BufferUsage;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.util.math.MathHelper;
 
 import fi.dy.masa.malilib.config.IConfigColor;
@@ -507,7 +508,7 @@ public class GuiColorEditorHSV extends GuiDialogBase
 
         // Full SV Square --
         // MaLiLibPipelines.POSITION_SIMPLE
-        RenderContext ctx = new RenderContext(() -> "ColorSelector A", MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(() -> "ColorSelector A", MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
 
         int r = (int) (this.relR * 255f);
@@ -516,7 +517,7 @@ public class GuiColorEditorHSV extends GuiDialogBase
         int a = 255;
         int c = 255;
 
-        RenderUtils.blend(true);
+//        RenderUtils.blend(true);
 //        int tempColor = RenderUtils.color(r, g, b, a);
 //        RenderUtils.color(1f, 1f, 1f, 1f);
 
@@ -539,15 +540,21 @@ public class GuiColorEditorHSV extends GuiDialogBase
 
         try
         {
-//            ctx = ctx.setBuilder(buffer);
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.reset();
         }
         catch (Exception ignored) { }
 
         // Element Selectors --
         // MaLiLibPipelines.POSITION_COLOR_SIMPLE
-        buffer = ctx.start(() -> "ColorSelector B", MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
+        buffer = ctx.start(() -> "ColorSelector B", MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
 
         /*
         int r = (int) (this.relR * 255f);
@@ -636,7 +643,14 @@ public class GuiColorEditorHSV extends GuiDialogBase
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception ignored) { }

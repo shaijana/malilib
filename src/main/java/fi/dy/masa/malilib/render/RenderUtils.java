@@ -69,6 +69,7 @@ public class RenderUtils
     //private static final Vec3d LIGHT0_POS = (new Vec3d( 0.2D, 1.0D, -0.7D)).normalize();
     //private static final Vec3d LIGHT1_POS = (new Vec3d(-0.2D, 1.0D,  0.7D)).normalize();
 
+    @Deprecated(forRemoval = true)
     public static void blend(boolean toggle)
     {
         //RenderSystem.enableBlend();
@@ -92,6 +93,7 @@ public class RenderUtils
     }
      */
 
+    @Deprecated(forRemoval = true)
     public static void depthTest(boolean toggle)
     {
         if (toggle)
@@ -104,16 +106,19 @@ public class RenderUtils
         }
     }
 
+    @Deprecated(forRemoval = true)
     public static void depthFunc(int depth)
     {
         GlStateManager._depthFunc(depth);
     }
 
+    @Deprecated(forRemoval = true)
     public static void depthMask(boolean toggle)
     {
         GlStateManager._depthMask(toggle);
     }
 
+    @Deprecated(forRemoval = true)
     public static void culling(boolean toggle)
     {
         if (toggle)
@@ -126,6 +131,7 @@ public class RenderUtils
         }
     }
 
+    @Deprecated(forRemoval = true)
     public static void polygonOffset(boolean toggle)
     {
         if (toggle)
@@ -138,12 +144,14 @@ public class RenderUtils
         }
     }
 
+    @Deprecated(forRemoval = true)
     public static void fbStartDrawing()
     {
         RenderSystem.assertOnRenderThread();
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, 0);
     }
 
+    @Deprecated(forRemoval = true)
     public static void polygonOffset(float factor, float units)
     {
         GlStateManager._polygonOffset(factor, units);
@@ -252,21 +260,36 @@ public class RenderUtils
         drawOutlinedBox(x, y, width, height, colorBg, colorBorder, 0f);
     }
 
+    public static void drawOutlinedBox(int x, int y, int width, int height, int colorBg, int colorBorder, boolean depthMask)
+    {
+        drawOutlinedBox(x, y, width, height, colorBg, colorBorder, 0f, depthMask);
+    }
+
     public static void drawOutlinedBox(int x, int y, int width, int height, int colorBg, int colorBorder, float zLevel)
     {
+        drawOutlinedBox(x, y, width, height, colorBg, colorBorder, zLevel, false);
+    }
+
+    public static void drawOutlinedBox(int x, int y, int width, int height, int colorBg, int colorBorder, float zLevel, boolean depthMask)
+    {
         // Draw the background
-        drawRect(x, y, width, height, colorBg, zLevel);
+        drawRect(x, y, width, height, colorBg, zLevel, depthMask);
 
         // Draw the border
-        drawOutline(x - 1, y - 1, width + 2, height + 2, colorBorder, zLevel);
+        drawOutline(x - 1, y - 1, width + 2, height + 2, colorBorder, zLevel, depthMask);
     }
 
     public static void drawOutline(int x, int y, int width, int height, int colorBorder)
     {
-        drawOutline(x, y, width, height, colorBorder, 0f);
+        drawOutline(x, y, width, height, colorBorder, 0f, false);
     }
 
-    public static void drawOutline(int x, int y, int width, int height, int colorBorder, float zLevel)
+    public static void drawOutline(int x, int y, int width, int height, int colorBorder, boolean depthMask)
+    {
+        drawOutline(x, y, width, height, colorBorder, 0f, depthMask);
+    }
+
+    public static void drawOutline(int x, int y, int width, int height, int colorBorder, float zLevel, boolean depthMask)
     {
         drawRect(x                    , y,      1, height, colorBorder, zLevel); // left edge
         drawRect(x + width - 1        , y,      1, height, colorBorder, zLevel); // right edge
@@ -276,15 +299,25 @@ public class RenderUtils
 
     public static void drawOutline(int x, int y, int width, int height, int borderWidth, int colorBorder)
     {
-        drawOutline(x, y, width, height, borderWidth, colorBorder, 0f);
+        drawOutline(x, y, width, height, borderWidth, colorBorder, 0f, false);
     }
 
-    public static void drawOutline(int x, int y, int width, int height, int borderWidth, int colorBorder, float zLevel)
+    public static void drawOutline(int x, int y, int width, int height, int borderWidth, int colorBorder, boolean depthMask)
     {
-        drawRect(x                      ,                        y, borderWidth            , height     , colorBorder, zLevel); // left edge
-        drawRect(x + width - borderWidth,                        y, borderWidth            , height     , colorBorder, zLevel); // right edge
-        drawRect(x + borderWidth        ,                        y, width - 2 * borderWidth, borderWidth, colorBorder, zLevel); // top edge
-        drawRect(x + borderWidth        , y + height - borderWidth, width - 2 * borderWidth, borderWidth, colorBorder, zLevel); // bottom edge
+        drawOutline(x, y, width, height, borderWidth, colorBorder, 0f, depthMask);
+    }
+
+    public static void drawOutline(int x, int y, int width, int height, int borderWidth, int colorBorder, float zlevel)
+    {
+        drawOutline(x, y, width, height, borderWidth, colorBorder, zlevel, false);
+    }
+
+    public static void drawOutline(int x, int y, int width, int height, int borderWidth, int colorBorder, float zLevel, boolean depthMask)
+    {
+        drawRect(x                      ,                        y, borderWidth            , height     , colorBorder, zLevel, depthMask); // left edge
+        drawRect(x + width - borderWidth,                        y, borderWidth            , height     , colorBorder, zLevel, depthMask); // right edge
+        drawRect(x + borderWidth        ,                        y, width - 2 * borderWidth, borderWidth, colorBorder, zLevel, depthMask); // top edge
+        drawRect(x + borderWidth        , y + height - borderWidth, width - 2 * borderWidth, borderWidth, colorBorder, zLevel, depthMask); // bottom edge
     }
 
     public static void drawTexturedRect(Matrix4f posMatrix, int x, int y, int u, int v, int width, int height, VertexConsumer buffer)
@@ -302,12 +335,22 @@ public class RenderUtils
         drawRect(x, y, width, height, color, 0f);
     }
 
-    public static void drawRect(int x, int y, int width, int height, int color, float zLevel)
+    public static void drawRect(int x, int y, int width, int height, int color, boolean depthMask)
     {
-        drawRect(x, y, width, height, color, zLevel, 1.0f);
+        drawRect(x, y, width, height, color, 0f, 1.0f, depthMask);
     }
 
-    public static void drawRect(int x, int y, int width, int height, int color, float zLevel, float scale)
+    public static void drawRect(int x, int y, int width, int height, int color, float zLevel)
+    {
+        drawRect(x, y, width, height, color, zLevel, 1.0f, false);
+    }
+
+    public static void drawRect(int x, int y, int width, int height, int color, float zLevel, boolean depthMask)
+    {
+        drawRect(x, y, width, height, color, zLevel, 1.0f, depthMask);
+    }
+
+    public static void drawRect(int x, int y, int width, int height, int color, float zLevel, float scale, boolean depthMask)
     {
         float a = (float) (color >> 24 & 255) / 255.0F;
         float r = (float) (color >> 16 & 255) / 255.0F;
@@ -317,7 +360,8 @@ public class RenderUtils
 //        blend(true);
 
         // POSITION_COLOR_SIMPLE
-        RenderContext ctx = new RenderContext(MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
+//        RenderContext ctx = new RenderContext(MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(depthMask ? MaLiLibPipelines.POSITION_COLOR_MASA_DEPTH_MASK : MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
 
         buffer.vertex(x * scale,           y * scale,            zLevel).color(r, g, b, a);
@@ -353,7 +397,7 @@ public class RenderUtils
         float pixelWidth = 0.00390625F;
 
         // GUI_TEXTURED_OVERLAY
-        blend(true);
+//        blend(true);
 
         buffer.vertex(posMatrix, x, y + height, zLevel).texture(u * pixelWidth, (v + height) * pixelWidth).color(color);
         buffer.vertex(posMatrix, x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth).color(color);
@@ -427,7 +471,7 @@ public class RenderUtils
         float pixelWidth = 0.00390625F;
 
         //RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR);
-        blend(true);
+//        blend(true);
         VertexConsumer vertexConsumer = bindGuiOverlayTexture(texture, drawContext);
         Matrix4f matrix4f = drawContext.getMatrices().peek().getPositionMatrix();
 
@@ -461,7 +505,7 @@ public class RenderUtils
     {
         if (textLines.isEmpty() == false && GuiUtils.getCurrentScreen() != null)
         {
-            depthTest(true);
+//            depthTest(true);
             TextRenderer font = mc().textRenderer;
             int maxLineLength = 0;
             int maxWidth = GuiUtils.getCurrentScreen().width;
@@ -546,8 +590,8 @@ public class RenderUtils
         int eg = (endColor >> 8 & 0xFF);
         int eb = (endColor & 0xFF);
 
-        blend(true);
-        RenderContext ctx = new RenderContext(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
+//        blend(true);
+        RenderContext ctx = new RenderContext(MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
 
         buffer.vertex(right, top, zLevel).color(sr, sg, sb, sa);
@@ -557,15 +601,22 @@ public class RenderUtils
 
         try
         {
-            // fb()
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
         {
             MaLiLib.LOGGER.error("drawGradientRect(): Draw Exception; {}", err.getMessage());
         }
-        blend(false);
+
+//        blend(false);
     }
 
     public static void drawCenteredString(int x, int y, int color, String text, DrawContext drawContext)
@@ -648,7 +699,7 @@ public class RenderUtils
         boolean scaled = scale != 1.0;
 
 //        depthTest(true);
-        blend(true);
+//        blend(true);
 
         if (scaled)
         {
@@ -697,7 +748,7 @@ public class RenderUtils
 
             if (useBackground)
             {
-                drawRect(x - bgMargin, y - bgMargin, width + bgMargin, bgMargin + fontRenderer.fontHeight, bgColor, 0f, (float) scale);
+                drawRect(x - bgMargin, y - bgMargin, width + bgMargin, bgMargin + fontRenderer.fontHeight, bgColor, 0f, (float) scale, false);
             }
 
             drawContext.drawText(fontRenderer, line, x, y, textColor, useShadow);
@@ -712,7 +763,7 @@ public class RenderUtils
         }
 
 //        depthTest(false);
-        blend(false);
+//        blend(false);
 
         return contentHeight + bgMargin * 2;
     }
@@ -1136,10 +1187,10 @@ public class RenderUtils
         global4fStack.scale((-scale), (-scale), scale);
         //RenderSystem.applyModelViewMatrix();
 
-        culling(false);
-        blend(true);
+//        culling(false);
+//        blend(true);
 
-        RenderContext ctx = new RenderContext(MaLiLibPipelines.POSITION_COLOR_MASA, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(disableDepth ? MaLiLibPipelines.POSITION_COLOR_MASA_DEPTH_MASK : MaLiLibPipelines.POSITION_COLOR_MASA, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
         int maxLineLen = 0;
 
@@ -1155,11 +1206,11 @@ public class RenderUtils
         int bgg = ((bgColor >>> 8) & 0xFF);
         int bgb = (bgColor & 0xFF);
 
-        if (disableDepth)
-        {
-            //RenderSystem.depthMask(false);
-            depthTest(false);
-        }
+//        if (disableDepth)
+//        {
+//            //RenderSystem.depthMask(false);
+//            depthTest(false);
+//        }
 
         buffer.vertex((float) (-strLenHalf - 1), (float) -1, 0.0F).color(bgr, bgg, bgb, bga);
         buffer.vertex((float) (-strLenHalf - 1), (float) textHeight, 0.0F).color(bgr, bgg, bgb, bga);
@@ -1168,7 +1219,14 @@ public class RenderUtils
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -1179,11 +1237,11 @@ public class RenderUtils
         int textY = 0;
 
         // translate the text a bit infront of the background
-        if (disableDepth == false)
-        {
-            polygonOffset(true);
-            polygonOffset(-0.6f, -1.2f);
-        }
+//        if (disableDepth == false)
+//        {
+//            polygonOffset(true);
+//            polygonOffset(-0.6f, -1.2f);
+//        }
 
         Matrix4f modelMatrix = new Matrix4f();
         modelMatrix.identity();
@@ -1192,33 +1250,36 @@ public class RenderUtils
 
         for (String line : text)
         {
+            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
+
             if (disableDepth)
             {
                 //depthMask(false);
-                depthTest(false);
-                VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
+//                depthTest(false);
                 textRenderer.draw(line, -strLenHalf, textY, 0x20000000 | (textColor & 0xFFFFFF), false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
-                immediate.draw();
-                depthTest(true);
+//                immediate.draw();
+//                depthTest(true);
                 //depthMask(true);
             }
+            else
+            {
+                textRenderer.draw(line, -strLenHalf, textY, textColor, false, modelMatrix, immediate, TextRenderer.TextLayerType.NORMAL, 0, 15728880);
+            }
 
-            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
-            textRenderer.draw(line, -strLenHalf, textY, textColor, false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
             immediate.draw();
             textY += textRenderer.fontHeight;
         }
 
         allocator.close();
 
-        if (disableDepth == false)
-        {
-            polygonOffset(0f, 0f);
-            polygonOffset(false);
-        }
+//        if (disableDepth == false)
+//        {
+//            polygonOffset(0f, 0f);
+//            polygonOffset(false);
+//        }
 
         color(1f, 1f, 1f, 1f);
-        culling(true);
+//        culling(true);
         //RenderSystem.disableBlend();
         global4fStack.popMatrix();
     }
@@ -1293,7 +1354,14 @@ public class RenderUtils
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.reset();
         }
         catch (Exception err)
@@ -1301,7 +1369,7 @@ public class RenderUtils
             MaLiLib.LOGGER.error("renderBlockTargetingOverlay():1: Draw Exception; {}", err.getMessage());
         }
 
-        RenderSystem.lineWidth(1.6f);
+//        RenderSystem.lineWidth(1.6f);
         int wireColor = -1;
 
         // Target "Center" -->
@@ -1329,9 +1397,16 @@ public class RenderUtils
 
         try
         {
-            ctx.color(wireColor);
-            ctx.lineWidth(1.6f);
-            ctx.draw(buffer.endNullable(), true);
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.color(wireColor);
+                ctx.lineWidth(1.6f);
+                ctx.draw(meshData, true);
+                meshData.close();
+            }
+
             ctx.reset();
         }
         catch (Exception err)
@@ -1385,9 +1460,16 @@ public class RenderUtils
 
         try
         {
-            ctx.color(wireColor);
-            ctx.lineWidth(1.6f);
-            ctx.draw(buffer.endNullable(), true);
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.color(wireColor);
+                ctx.lineWidth(1.6f);
+                ctx.draw(meshData, true);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -1432,7 +1514,14 @@ public class RenderUtils
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.reset();
         }
         catch (Exception err)
@@ -1440,7 +1529,7 @@ public class RenderUtils
             MaLiLib.LOGGER.error("renderBlockTargetingOverlaySimple():1: Draw Exception; {}", err.getMessage());
         }
 
-        RenderSystem.lineWidth(1.6f);
+//        RenderSystem.lineWidth(1.6f);
 
         buffer = ctx.start(() -> "TestTarget B", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
         //ctx.setShader(ShaderPipelines.LINE_STRIP);
@@ -1453,8 +1542,15 @@ public class RenderUtils
 
         try
         {
-            ctx.lineWidth(1.6f);
-            ctx.draw(buffer.endNullable(), true);
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(1.6f);
+                ctx.draw(meshData, true);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -2006,7 +2102,7 @@ public class RenderUtils
         bindGuiOverlayTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, context);
         tex().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).setFilter(false, false);
 
-        blend(true);
+//        blend(true);
         color(1f, 1f, 1f, 1f);
 
         //setupGuiTransform(x, y, model.hasDepth(), zLevel);
@@ -2061,13 +2157,21 @@ public class RenderUtils
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
         {
             MaLiLib.LOGGER.error("renderBlockModel(): Draw Exception; {}", err.getMessage());
         }
+
         matrix4fStack.popMatrix();
     }
 
@@ -2180,10 +2284,15 @@ public class RenderUtils
 
     public static void renderBlockOutline(BlockPos pos, float expand, float lineWidth, Color4f color)
     {
+        renderBlockOutline(pos, expand, lineWidth, color, true);
+    }
+
+    public static void renderBlockOutline(BlockPos pos, float expand, float lineWidth, Color4f color, boolean renderThrough)
+    {
 //        RenderSystem.lineWidth(lineWidth);
 
         // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
-        RenderContext ctx = new RenderContext(MaLiLibPipelines.LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(renderThrough ? MaLiLibPipelines.LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL : RenderPipelines.LINES, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
         MatrixStack matrices = new MatrixStack();
 
@@ -2192,8 +2301,15 @@ public class RenderUtils
 
         try
         {
-            ctx.lineWidth(lineWidth);
-            ctx.draw(buffer.endNullable(), true);
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(lineWidth);
+                ctx.draw(meshData, true);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -2257,6 +2373,13 @@ public class RenderUtils
     public static void renderBlockOutlineOverlapping(BlockPos pos, float expand, float lineWidth,
                                                      Color4f color1, Color4f color2, Color4f color3, Matrix4f matrix4f)
     {
+        renderBlockOutlineOverlapping(pos, expand, lineWidth, color1, color2, color3, matrix4f, true);
+    }
+
+    public static void renderBlockOutlineOverlapping(BlockPos pos, float expand, float lineWidth,
+                                                     Color4f color1, Color4f color2, Color4f color3, Matrix4f matrix4f,
+                                                     boolean renderThrough)
+    {
         Vec3d cameraPos = camPos();
         final double dx = cameraPos.x;
         final double dy = cameraPos.y;
@@ -2273,7 +2396,7 @@ public class RenderUtils
 
         // RenderPipelines.LINES
         // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
-        RenderContext ctx = new RenderContext(MaLiLibPipelines.LINES_MASA_SIMPLE_OFFSET_2, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(renderThrough ? MaLiLibPipelines.LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL : RenderPipelines.LINES, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
         MatrixStack matrices = new MatrixStack();
 
@@ -2321,8 +2444,15 @@ public class RenderUtils
 
         try
         {
-            ctx.lineWidth(lineWidth);
-            ctx.draw(buffer.endNullable(), true);
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(lineWidth);
+                ctx.draw(meshData, true);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -2370,7 +2500,14 @@ public class RenderUtils
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -2430,8 +2567,8 @@ public class RenderUtils
 
     public static void renderAreaSides(BlockPos pos1, BlockPos pos2, Color4f color, Matrix4f matrix4f)
     {
-        blend(true);
-        culling(false);
+//        blend(true);
+//        culling(false);
 
         // MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL
         RenderContext ctx = new RenderContext(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_2, BufferUsage.STATIC_WRITE);
@@ -2441,15 +2578,25 @@ public class RenderUtils
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.upload(meshData);
+                ctx.startResorting(meshData, ctx.createVertexSorter(camPos()));
+                meshData.close();
+                ctx.drawPost();
+            }
+
             ctx.close();
         }
         catch (Exception err)
         {
             MaLiLib.LOGGER.error("renderAreaSides(): Draw Exception; {}", err.getMessage());
         }
-        culling(true);
-        blend(false);
+
+//        culling(true);
+//        blend(false);
     }
 
     /**
@@ -2628,8 +2775,15 @@ public class RenderUtils
 
         try
         {
-            ctx.lineWidth(lineWidth);
-            ctx.draw(buffer.endNullable(), true);
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(lineWidth);
+                ctx.draw(meshData, true);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)

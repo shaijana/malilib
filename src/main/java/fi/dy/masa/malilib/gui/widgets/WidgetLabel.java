@@ -64,7 +64,7 @@ public class WidgetLabel extends WidgetBase
 
         if (this.visible)
         {
-            RenderUtils.blend(true);
+//            RenderUtils.blend(true);
             this.drawLabelBackground();
 
             int fontHeight = this.fontHeight;

@@ -310,8 +310,8 @@ public class TestRenderHandler implements IRenderer
             RenderUtils.depthMask(false);
             RenderUtils.culling(false);
             RenderUtils.depthTest(false);
-             */
             RenderUtils.blend(true);
+             */
 
             Color4f color = Color4f.fromColor(StringUtils.getColor("#C03030F0", 0));
 
@@ -322,8 +322,8 @@ public class TestRenderHandler implements IRenderer
                     hitResult.getPos(),
                     color, posMatrix);
 
-            RenderUtils.blend(false);
             /*
+            RenderUtils.blend(false);
             RenderUtils.depthTest(true);
             RenderUtils.culling(true);
             RenderUtils.depthMask(true);

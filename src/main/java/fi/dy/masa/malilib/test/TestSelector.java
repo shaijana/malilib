@@ -113,25 +113,25 @@ public class TestSelector implements IClientTickHandler
         Matrix4fStack globalStack = RenderSystem.getModelViewStack();
 
         globalStack.pushMatrix();
-        RenderUtils.color(1f, 1f, 1f, 1f);
-        RenderUtils.blend(true);
-        RenderUtils.depthTest(false);
-        RenderUtils.polygonOffset(true);
-        RenderUtils.polygonOffset(-1.2f, -0.2f);
+//        RenderUtils.color(1f, 1f, 1f, 1f);
+//        RenderUtils.blend(true);
+//        RenderUtils.depthTest(false);
+//        RenderUtils.polygonOffset(true);
+//        RenderUtils.polygonOffset(-1.2f, -0.2f);
 
         //renderLists(posMatrix, projMatrix, profiler);
 
         if (this.posLookingAt != null)
         {
-            RenderUtils.renderBlockOutline(this.posLookingAt, expand, lineWidthBlockBox, this.colorLooking);
+            RenderUtils.renderBlockOutline(this.posLookingAt, expand, lineWidthBlockBox, this.colorLooking, true);
         }
 
         this.renderSelection(posMatrix, projMatrix, profiler, this.AREA_SELECTION, mc);
 
-        RenderUtils.polygonOffset(0f, 0f);
-        RenderUtils.polygonOffset(false);
+//        RenderUtils.polygonOffset(0f, 0f);
+//        RenderUtils.polygonOffset(false);
         globalStack.popMatrix();
-        RenderUtils.depthMask(true);
+//        RenderUtils.depthMask(true);
         profiler.pop();
     }
 
@@ -165,7 +165,7 @@ public class TestSelector implements IClientTickHandler
             else
             {
                 RenderUtils.renderBlockOutlineOverlapping(pos1, expand, lineWidthBlockBox, this.colorPos1, this.colorPos2,
-                                                          this.colorOverlapping, posMatrix);
+                                                          this.colorOverlapping, posMatrix, true);
             }
         }
         else

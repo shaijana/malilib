@@ -78,9 +78,14 @@ public class GuiScrollBar
 
     public void render(int mouseX, int mouseY, float partialTicks, int xPosition, int yPosition, int width, int height, int totalHeight, DrawContext drawContext)
     {
+        this.render(mouseX, mouseY, partialTicks, xPosition, yPosition, width, height, totalHeight, drawContext, false);
+    }
+
+    public void render(int mouseX, int mouseY, float partialTicks, int xPosition, int yPosition, int width, int height, int totalHeight, DrawContext drawContext, boolean depthMask)
+    {
         if (this.renderScrollbarBackground)
         {
-            RenderUtils.drawRect(xPosition, yPosition, width, height, this.backgroundColor);
+            RenderUtils.drawRect(xPosition, yPosition, width, height, this.backgroundColor, depthMask);
         }
 
         if (totalHeight > 0)
@@ -106,7 +111,7 @@ public class GuiScrollBar
             }
             else
             {
-                RenderUtils.drawRect(xPosition + 1, barPosition, width - 2, barHeight, this.foregroundColor);
+                RenderUtils.drawRect(xPosition + 1, barPosition, width - 2, barHeight, this.foregroundColor, depthMask);
             }
 
             //RenderUtils.forceDraw(drawContext);
