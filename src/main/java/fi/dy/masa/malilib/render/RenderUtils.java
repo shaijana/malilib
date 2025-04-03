@@ -69,7 +69,7 @@ public class RenderUtils
     //private static final Vec3d LIGHT0_POS = (new Vec3d( 0.2D, 1.0D, -0.7D)).normalize();
     //private static final Vec3d LIGHT1_POS = (new Vec3d(-0.2D, 1.0D,  0.7D)).normalize();
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void blend(boolean toggle)
     {
         //RenderSystem.enableBlend();
@@ -93,7 +93,7 @@ public class RenderUtils
     }
      */
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void depthTest(boolean toggle)
     {
         if (toggle)
@@ -106,19 +106,19 @@ public class RenderUtils
         }
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void depthFunc(int depth)
     {
         GlStateManager._depthFunc(depth);
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void depthMask(boolean toggle)
     {
         GlStateManager._depthMask(toggle);
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void culling(boolean toggle)
     {
         if (toggle)
@@ -131,7 +131,7 @@ public class RenderUtils
         }
     }
 
-//    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void polygonOffset(boolean toggle)
     {
         if (toggle)
@@ -144,13 +144,13 @@ public class RenderUtils
         }
     }
 
-    //    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void polygonOffset(float factor, float units)
     {
         GlStateManager._polygonOffset(factor, units);
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static void fbStartDrawing()
     {
         RenderSystem.assertOnRenderThread();
