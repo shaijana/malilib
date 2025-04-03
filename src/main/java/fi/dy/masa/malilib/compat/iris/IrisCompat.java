@@ -77,6 +77,7 @@ public class IrisCompat
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_1, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_2, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_3, IrisProgram.BASIC);
+            IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_4, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_GREATER_DEPTH, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_DEPTH_MASK, IrisProgram.BASIC);
@@ -87,6 +88,7 @@ public class IrisCompat
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_1, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_2, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_3, IrisProgram.BASIC);
+            IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_4, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_MASA_GREATER_DEPTH, IrisProgram.BASIC);
             IrisApi.getInstance().assignPipeline(MaLiLibPipelines.POSITION_COLOR_MASA_DEPTH_MASK, IrisProgram.BASIC);

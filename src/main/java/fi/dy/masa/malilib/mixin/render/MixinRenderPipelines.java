@@ -488,6 +488,15 @@ public abstract class MixinRenderPipelines
                               .withDepthBias(-3f, -3f)
                               .build();
 
+        MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_4 =
+                RenderPipeline.builder(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_STAGE)
+                              .withLocation(Identifier.of(MaLiLibReference.MOD_ID, "pipeline/position_color/translucent/lesser_depth/offset_4"))
+                              .withCull(false)
+                              .withDepthWrite(false)
+                              .withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST)
+                              .withDepthBias(-0.6f, -1.2f)
+                              .build();
+
         MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH =
                 RenderPipeline.builder(MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_STAGE)
                               .withLocation(Identifier.of(MaLiLibReference.MOD_ID, "pipeline/position_color/translucent/lesser_depth"))
@@ -562,6 +571,16 @@ public abstract class MixinRenderPipelines
                               .withColorWrite(true)
                               .withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST)
                               .withDepthBias(-3f, -3f)
+                              .build();
+
+        MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_4 =
+                RenderPipeline.builder(MaLiLibPipelines.POSITION_COLOR_MASA_STAGE)
+                              .withLocation(Identifier.of(MaLiLibReference.MOD_ID, "pipeline/position_color/masa/lesser_depth/offset_4"))
+                              .withCull(false)
+                              .withDepthWrite(false)
+                              .withColorWrite(true)
+                              .withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST)
+                              .withDepthBias(-0.6f, -1.2f)
                               .build();
 
         MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH =

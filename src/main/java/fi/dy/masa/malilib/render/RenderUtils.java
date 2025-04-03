@@ -131,7 +131,7 @@ public class RenderUtils
         }
     }
 
-    @Deprecated(forRemoval = true)
+//    @Deprecated(forRemoval = true)
     public static void polygonOffset(boolean toggle)
     {
         if (toggle)
@@ -144,17 +144,17 @@ public class RenderUtils
         }
     }
 
+    //    @Deprecated(forRemoval = true)
+    public static void polygonOffset(float factor, float units)
+    {
+        GlStateManager._polygonOffset(factor, units);
+    }
+
     @Deprecated(forRemoval = true)
     public static void fbStartDrawing()
     {
         RenderSystem.assertOnRenderThread();
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, 0);
-    }
-
-    @Deprecated(forRemoval = true)
-    public static void polygonOffset(float factor, float units)
-    {
-        GlStateManager._polygonOffset(factor, units);
     }
 
     public static ResourceTexture bindShaderTexture(Identifier texture, int textureId)
@@ -1190,7 +1190,7 @@ public class RenderUtils
 //        culling(false);
 //        blend(true);
 
-        RenderContext ctx = new RenderContext(disableDepth ? MaLiLibPipelines.POSITION_COLOR_MASA_DEPTH_MASK : MaLiLibPipelines.POSITION_COLOR_MASA, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(disableDepth ? MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL : MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_4, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
         int maxLineLen = 0;
 
@@ -1234,14 +1234,15 @@ public class RenderUtils
             MaLiLib.LOGGER.error("drawTextPlate(): Draw Exception; {}", err.getMessage());
         }
 
+        global4fStack.popMatrix();
         int textY = 0;
 
         // translate the text a bit infront of the background
-//        if (disableDepth == false)
-//        {
-//            polygonOffset(true);
-//            polygonOffset(-0.6f, -1.2f);
-//        }
+        if (disableDepth == false)
+        {
+            polygonOffset(true);
+            polygonOffset(-0.6f, -1.2f);
+        }
 
         Matrix4f modelMatrix = new Matrix4f();
         modelMatrix.identity();
@@ -1263,7 +1264,7 @@ public class RenderUtils
             }
             else
             {
-                textRenderer.draw(line, -strLenHalf, textY, textColor, false, modelMatrix, immediate, TextRenderer.TextLayerType.NORMAL, 0, 15728880);
+                textRenderer.draw(line, -strLenHalf, textY, textColor, false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
             }
 
             immediate.draw();
@@ -1272,16 +1273,16 @@ public class RenderUtils
 
         allocator.close();
 
-//        if (disableDepth == false)
-//        {
-//            polygonOffset(0f, 0f);
-//            polygonOffset(false);
-//        }
+        if (disableDepth == false)
+        {
+            polygonOffset(0f, 0f);
+            polygonOffset(false);
+        }
 
         color(1f, 1f, 1f, 1f);
 //        culling(true);
         //RenderSystem.disableBlend();
-        global4fStack.popMatrix();
+//        global4fStack.popMatrix();
     }
 
     public static void renderBlockTargetingOverlay(Entity entity, BlockPos pos, Direction side, Vec3d hitVec,
