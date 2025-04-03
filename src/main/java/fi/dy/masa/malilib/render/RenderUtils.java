@@ -1187,10 +1187,10 @@ public class RenderUtils
         global4fStack.scale((-scale), (-scale), scale);
         //RenderSystem.applyModelViewMatrix();
 
-//        culling(false);
-//        blend(true);
+        culling(false);
+        blend(true);
 
-        RenderContext ctx = new RenderContext(disableDepth ? MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL : MaLiLibPipelines.POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_4, BufferUsage.STATIC_WRITE);
+        RenderContext ctx = new RenderContext(MaLiLibPipelines.POSITION_COLOR_MASA, BufferUsage.STATIC_WRITE);
         BufferBuilder buffer = ctx.getBuilder();
         int maxLineLen = 0;
 
@@ -1206,11 +1206,11 @@ public class RenderUtils
         int bgg = ((bgColor >>> 8) & 0xFF);
         int bgb = (bgColor & 0xFF);
 
-//        if (disableDepth)
-//        {
-//            //RenderSystem.depthMask(false);
-//            depthTest(false);
-//        }
+        if (disableDepth)
+        {
+            //RenderSystem.depthMask(false);
+            depthTest(false);
+        }
 
         buffer.vertex((float) (-strLenHalf - 1), (float) -1, 0.0F).color(bgr, bgg, bgb, bga);
         buffer.vertex((float) (-strLenHalf - 1), (float) textHeight, 0.0F).color(bgr, bgg, bgb, bga);
@@ -1234,7 +1234,6 @@ public class RenderUtils
             MaLiLib.LOGGER.error("drawTextPlate(): Draw Exception; {}", err.getMessage());
         }
 
-        global4fStack.popMatrix();
         int textY = 0;
 
         // translate the text a bit infront of the background
@@ -1251,22 +1250,19 @@ public class RenderUtils
 
         for (String line : text)
         {
-            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
-
             if (disableDepth)
             {
                 //depthMask(false);
-//                depthTest(false);
+                depthTest(false);
+                VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
                 textRenderer.draw(line, -strLenHalf, textY, 0x20000000 | (textColor & 0xFFFFFF), false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
-//                immediate.draw();
-//                depthTest(true);
+                immediate.draw();
+                depthTest(true);
                 //depthMask(true);
             }
-            else
-            {
-                textRenderer.draw(line, -strLenHalf, textY, textColor, false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
-            }
 
+            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
+            textRenderer.draw(line, -strLenHalf, textY, textColor, false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
             immediate.draw();
             textY += textRenderer.fontHeight;
         }
@@ -1280,9 +1276,9 @@ public class RenderUtils
         }
 
         color(1f, 1f, 1f, 1f);
-//        culling(true);
+        culling(true);
         //RenderSystem.disableBlend();
-//        global4fStack.popMatrix();
+        global4fStack.popMatrix();
     }
 
     public static void renderBlockTargetingOverlay(Entity entity, BlockPos pos, Direction side, Vec3d hitVec,
