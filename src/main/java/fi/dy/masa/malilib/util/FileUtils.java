@@ -388,7 +388,8 @@ public class FileUtils
 
         while (file != null)
         {
-            String name = file.getFileName().toString();
+            // Sometimes getFileName() is null ?
+            String name = file.getFileName() != null ? file.getFileName().toString() : file.toString();
 
             if ((path.length() == 0) == false)
             {

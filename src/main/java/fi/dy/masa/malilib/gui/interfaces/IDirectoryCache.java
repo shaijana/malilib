@@ -5,7 +5,6 @@ import javax.annotation.Nullable;
 
 public interface IDirectoryCache
 {
-    // TODO -- Remove the file system; needs to deal with the FileFilter mechanism to make it compat with Path
     @Nullable
     Path getCurrentDirectoryForContext(String context);
 
