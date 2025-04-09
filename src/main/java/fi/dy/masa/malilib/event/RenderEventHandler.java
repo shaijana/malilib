@@ -477,10 +477,10 @@ public class RenderEventHandler implements IRenderDispatcher
                     profiler.pop();
                 }
 
-                if (!this.worldLastRenderers.isEmpty())
-                {
-                    fb.blitToScreen();
-                }
+//                if (!this.worldLastRenderers.isEmpty())
+//                {
+//                    fb.blitToScreen();
+//                }
 
                 RenderSystem.setShaderFog(fog);
             });

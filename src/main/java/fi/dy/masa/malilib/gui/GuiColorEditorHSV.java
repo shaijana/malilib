@@ -544,7 +544,7 @@ public class GuiColorEditorHSV extends GuiDialogBase
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 
@@ -647,7 +647,7 @@ public class GuiColorEditorHSV extends GuiDialogBase
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 

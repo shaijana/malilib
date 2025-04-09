@@ -63,7 +63,6 @@ public class MaLiLibPipelines
     public static RenderPipeline POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_1;
     public static RenderPipeline POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_2;
     public static RenderPipeline POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_3;
-    public static RenderPipeline POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH_OFFSET_4;
     public static RenderPipeline POSITION_COLOR_TRANSLUCENT_LESSER_DEPTH;
     public static RenderPipeline POSITION_COLOR_TRANSLUCENT_GREATER_DEPTH;
     public static RenderPipeline POSITION_COLOR_TRANSLUCENT_DEPTH_MASK;
@@ -75,7 +74,6 @@ public class MaLiLibPipelines
     public static RenderPipeline POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_1;
     public static RenderPipeline POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_2;
     public static RenderPipeline POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_3;
-    public static RenderPipeline POSITION_COLOR_MASA_LESSER_DEPTH_OFFSET_4;
     public static RenderPipeline POSITION_COLOR_MASA_LESSER_DEPTH;
     public static RenderPipeline POSITION_COLOR_MASA_GREATER_DEPTH;
     public static RenderPipeline POSITION_COLOR_MASA_DEPTH_MASK;

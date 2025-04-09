@@ -51,6 +51,7 @@ import net.minecraft.village.VillagerProfession;
 
 import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.MaLiLibConfigs;
+import fi.dy.masa.malilib.compat.lwgl.GpuCompat;
 import fi.dy.masa.malilib.config.HudAlignment;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.mixin.render.IMixinDrawContext;
@@ -371,7 +372,14 @@ public class RenderUtils
 
         try
         {
-            ctx.draw(buffer.endNullable());
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData, false);
+                meshData.close();
+            }
+
             ctx.close();
         }
         catch (Exception err)
@@ -605,7 +613,7 @@ public class RenderUtils
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 
@@ -675,7 +683,7 @@ public class RenderUtils
                                  List<String> lines, DrawContext drawContext)
     {
         return renderText(xOff, yOff, scale, textColor, bgColor, alignment,
-                          useBackground, useShadow, MaLiLibConfigs.Generic.ENABLE_STATUS_EFFECTS_SHIFT.getBooleanValue(),
+                          useBackground, useShadow, true,
                           lines, drawContext);
     }
 
@@ -1223,7 +1231,7 @@ public class RenderUtils
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 
@@ -1355,7 +1363,7 @@ public class RenderUtils
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 
@@ -1515,7 +1523,7 @@ public class RenderUtils
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 
@@ -2158,7 +2166,7 @@ public class RenderUtils
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 
@@ -2501,7 +2509,7 @@ public class RenderUtils
 
             if (meshData != null)
             {
-                ctx.draw(meshData);
+                ctx.draw(meshData, false);
                 meshData.close();
             }
 
@@ -2564,6 +2572,11 @@ public class RenderUtils
 
     public static void renderAreaSides(BlockPos pos1, BlockPos pos2, Color4f color, Matrix4f matrix4f)
     {
+        renderAreaSides(pos1, pos2, color, matrix4f, false);
+    }
+
+    public static void renderAreaSides(BlockPos pos1, BlockPos pos2, Color4f color, Matrix4f matrix4f, boolean shouldResort)
+    {
 //        blend(true);
 //        culling(false);
 
@@ -2579,8 +2592,16 @@ public class RenderUtils
 
             if (meshData != null)
             {
-                ctx.upload(meshData);
-                ctx.startResorting(meshData, ctx.createVertexSorter(camPos()));
+                if (shouldResort)
+                {
+                    ctx.upload(meshData, true);
+                    ctx.startResorting(meshData, ctx.createVertexSorter(camPos()));
+                }
+                else
+                {
+                    ctx.upload(meshData, false);
+                }
+
                 meshData.close();
                 ctx.drawPost();
             }

@@ -158,7 +158,7 @@ public class TestSelector implements IClientTickHandler
             if (!pos1.equals(pos2))
             {
                 RenderUtils.renderAreaOutlineNoCorners(pos1, pos2, lineWidthArea, this.colorX, this.colorY, this.colorZ);
-                RenderUtils.renderAreaSides(pos1, pos2, this.sideColor, posMatrix);
+                RenderUtils.renderAreaSides(pos1, pos2, this.sideColor, posMatrix, false);
                 RenderUtils.renderBlockOutline(pos1, expand, lineWidthBlockBox, this.colorPos1);
                 RenderUtils.renderBlockOutline(pos2, expand, lineWidthBlockBox, this.colorPos2);
             }

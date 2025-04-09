@@ -218,6 +218,11 @@ public class RenderContext implements AutoCloseable
      */
     public void upload() throws RuntimeException
     {
+        this.upload(false);
+    }
+
+    public void upload(boolean shouldResort) throws RuntimeException
+    {
         this.ensureSafeNoShader();
         this.ensureBuilding(this.builder);
 
@@ -225,7 +230,7 @@ public class RenderContext implements AutoCloseable
         {
             if (meshData != null)
             {
-                this.upload(meshData);
+                this.upload(meshData, shouldResort);
             }
             else
             {
@@ -236,6 +241,11 @@ public class RenderContext implements AutoCloseable
 
     public void upload(BufferBuilder builder) throws RuntimeException
     {
+        this.upload(builder, false);
+    }
+
+    public void upload(BufferBuilder builder, boolean shouldResort) throws RuntimeException
+    {
         this.ensureSafeNoShader();
         this.ensureBuilding(builder);
         this.builder = builder;
@@ -244,7 +254,7 @@ public class RenderContext implements AutoCloseable
         {
             if (meshData != null)
             {
-                this.upload(meshData);
+                this.upload(meshData, shouldResort);
             }
             else
             {
@@ -253,7 +263,7 @@ public class RenderContext implements AutoCloseable
         }
     }
 
-    public void upload(BuiltBuffer meshData) throws RuntimeException
+    public void upload(BuiltBuffer meshData, boolean shouldResort) throws RuntimeException
     {
         this.ensureSafeNoShader();
 
@@ -293,7 +303,7 @@ public class RenderContext implements AutoCloseable
             }
 
             // Resorting
-            if (meshData.getSortedBuffer() != null)
+            if (shouldResort && meshData.getSortedBuffer() != null)
             {
                 if (this.indexBuffer != null && this.indexBuffer.size() >= meshData.getSortedBuffer().remaining())
                 {
@@ -588,13 +598,18 @@ public class RenderContext implements AutoCloseable
      */
     public void draw() throws RuntimeException
     {
+        this.draw(false);
+    }
+
+    public void draw(boolean shouldResort) throws RuntimeException
+    {
         this.ensureSafeNoBuffer();
         this.ensureBuilding(this.builder);
         BuiltBuffer meshData = this.builder.endNullable();
 
         if (meshData != null)
         {
-            this.draw(meshData);
+            this.draw(meshData, shouldResort);
             meshData.close();
         }
     }
@@ -602,28 +617,34 @@ public class RenderContext implements AutoCloseable
     public void draw(BuiltBuffer meshData) throws RuntimeException
     {
         this.ensureSafeNoBuffer();
-        this.draw(null, meshData, false, false);
+        this.draw(null, meshData, false, false, false);
     }
 
-    public void draw(BuiltBuffer meshData, boolean setLineWidth) throws RuntimeException
+    public void draw(BuiltBuffer meshData, boolean shouldResort) throws RuntimeException
     {
         this.ensureSafeNoBuffer();
-        this.draw(null, meshData, false, setLineWidth);
+        this.draw(null, meshData, shouldResort, false, false);
     }
 
-    public void draw(@Nullable Framebuffer otherFb, BuiltBuffer meshData) throws RuntimeException
+    public void draw(BuiltBuffer meshData, boolean shouldResort, boolean setLineWidth) throws RuntimeException
     {
         this.ensureSafeNoBuffer();
-        this.draw(otherFb, meshData, false, false);
+        this.draw(null, meshData, shouldResort, false, setLineWidth);
     }
 
-    public void draw(@Nullable Framebuffer otherFb, BuiltBuffer meshData, boolean setLineWidth) throws RuntimeException
+    public void draw(@Nullable Framebuffer otherFb, BuiltBuffer meshData, boolean shouldResort) throws RuntimeException
     {
         this.ensureSafeNoBuffer();
-        this.draw(otherFb, meshData, false, setLineWidth);
+        this.draw(otherFb, meshData, shouldResort, false, false);
     }
 
-    public void draw(@Nullable Framebuffer otherFb, BuiltBuffer meshData,
+    public void draw(@Nullable Framebuffer otherFb, BuiltBuffer meshData, boolean shouldResort, boolean setLineWidth) throws RuntimeException
+    {
+        this.ensureSafeNoBuffer();
+        this.draw(otherFb, meshData, shouldResort, false, setLineWidth);
+    }
+
+    public void draw(@Nullable Framebuffer otherFb, BuiltBuffer meshData, boolean shouldResort,
                      boolean useOffset, boolean setLineWidth) throws RuntimeException
     {
         this.ensureSafeNoBuffer();
@@ -640,7 +661,7 @@ public class RenderContext implements AutoCloseable
                 if (this.indexCount < 1)
                 {
                     //MaLiLib.LOGGER.warn("RenderContext#draw() [{}] --> upload()", this.name.get());
-                    this.upload(meshData);
+                    this.upload(meshData, shouldResort);
                 }
             }
 
@@ -910,6 +931,7 @@ public class RenderContext implements AutoCloseable
         {
             this.unbindTexture(this.texture.getId());
             this.texture.close();
+            this.texture = null;
         }
 
         this.reset();

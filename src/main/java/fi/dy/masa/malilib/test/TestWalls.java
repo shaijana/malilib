@@ -42,6 +42,7 @@ public class TestWalls implements AutoCloseable
     protected BlockPos lastUpdatePos;
     private Vec3d updateCameraPos;
     private boolean hasData;
+    private final boolean shouldResort;
     private final boolean needsUpdate;
     private final int updateDistance = 48;
 
@@ -53,6 +54,7 @@ public class TestWalls implements AutoCloseable
         this.lastUpdatePos = null;
         this.updateCameraPos = Vec3d.ZERO;
         this.hasData = false;
+        this.shouldResort = false;
         this.needsUpdate = true;
         this.boxes = new ArrayList<>();
         this.center = null;
@@ -162,8 +164,16 @@ public class TestWalls implements AutoCloseable
 
             if (meshData != null)
             {
-                ctx.upload(meshData);
-                ctx.startResorting(meshData, ctx.createVertexSorter(camera));
+                if (this.shouldResort)
+                {
+                    ctx.upload(meshData, true);
+                    ctx.startResorting(meshData, ctx.createVertexSorter(camera));
+                }
+                else
+                {
+                    ctx.upload(meshData, false);
+                }
+
                 ctx.drawPost();
                 meshData.close();
             }
@@ -221,7 +231,7 @@ public class TestWalls implements AutoCloseable
             if (meshData != null)
             {
                 ctx.lineWidth(this.glLineWidth);
-                ctx.draw(meshData, true);
+                ctx.draw(meshData, false, true);
                 meshData.close();
             }
 
