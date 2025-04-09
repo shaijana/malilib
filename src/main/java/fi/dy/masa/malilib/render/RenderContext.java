@@ -271,15 +271,16 @@ public class RenderContext implements AutoCloseable
         {
             int expectedSize = meshData.getBuffer().remaining();
 
-//            if (this.vertexBuffer != null)
-//            {
-//                this.vertexBuffer.close();
-//            }
-//            if (this.indexBuffer != null)
-//            {
-//                this.indexBuffer.close();
-//                this.indexBuffer = null;
-//            }
+            if (this.vertexBuffer != null)
+            {
+                this.vertexBuffer.close();
+            }
+
+            if (this.indexBuffer != null)
+            {
+                this.indexBuffer.close();
+                this.indexBuffer = null;
+            }
 
             if (this.vertexBuffer == null)
             {
