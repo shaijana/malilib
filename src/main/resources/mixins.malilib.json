@@ -4,7 +4,7 @@
     "compatibilityLevel": "JAVA_21",
     "minVersion": "0.8",
     "mixins": [
-        "MixinMinecraftServer",
+        "server.MixinMinecraftServer",
         "entity.IMixinAbstractHorseEntity",
         "entity.IMixinMerchantEntity",
         "entity.IMixinPiglinEntity",
@@ -17,7 +17,7 @@
         "test.MixinSharedConstants"
     ],
     "client": [
-        "MixinIntegratedServer",
+        "server.MixinIntegratedServer",
         "MixinMinecraftClient",
         "entity.IMixinDataQueryHandler",
         "hud.MixinInGameHud",
