@@ -15,10 +15,7 @@ import net.minecraft.block.entity.CrafterBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.BufferBuilderStorage;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
@@ -101,7 +98,7 @@ public class TestRenderHandler implements IRenderer
                 list.add("Test Line 4");
                 list.add("Test Line 5");
 
-                RenderUtils.renderText(drawContext, 4, 4, 0.5F, 0xFFE0E0E0, 0xA0505050, HudAlignment.TOP_LEFT, true, false, true, list);
+                RenderUtils.renderText(4, 4, 0.5F, 0xFFE0E0E0, 0xA0505050, HudAlignment.TOP_LEFT, true, false, true, list, drawContext);
             }
         }
     }
