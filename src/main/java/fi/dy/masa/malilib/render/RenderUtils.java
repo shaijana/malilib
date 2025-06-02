@@ -2082,6 +2082,32 @@ public class RenderUtils
         }
     }
 
+    public static boolean stateModelHasQuads(BlockState state)
+    {
+        return modelHasQuads(Objects.requireNonNull(MinecraftClient.getInstance().getBlockRenderManager().getModel(state)));
+    }
+
+    public static boolean modelHasQuads(@Nonnull BlockStateModel model)
+    {
+        return hasQuads(model.getParts(new LocalRandom(0)));
+    }
+
+    public static boolean hasQuads(List<BlockModelPart> modelParts)
+    {
+        if (modelParts.isEmpty()) return false;
+        int totalSize = 0;
+
+        for (BlockModelPart part : modelParts)
+        {
+            for (Direction face : PositionUtils.ALL_DIRECTIONS)
+            {
+                totalSize += part.getQuads(face).size();
+            }
+        }
+
+        return totalSize > 0;
+    }
+
     @SuppressWarnings("deprecation")
     public static void renderModelInGui(int x, int y, BlockStateModel model, BlockState state, float zLevel, DrawContext context)
     {
