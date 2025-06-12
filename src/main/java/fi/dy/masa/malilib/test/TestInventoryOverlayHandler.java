@@ -45,6 +45,7 @@ import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.malilib.util.WorldUtils;
 import fi.dy.masa.malilib.util.nbt.NbtBlockUtils;
 import fi.dy.masa.malilib.util.nbt.NbtKeys;
+import fi.dy.masa.malilib.util.nbt.NbtView;
 
 @ApiStatus.Experimental
 public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
@@ -127,12 +128,12 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
             if (MaLiLibConfigs.Test.TEST_INVENTORY_OVERLAY_OG.getBooleanValue())
             {
                 // Tweakeroo style
-                TestRenderHandler.renderInventoryOverlayOG(this.getRenderContextNullable(), drawContext, mc);
+                TestRenderHandler.renderInventoryOverlayOG(drawContext, this.getRenderContextNullable(), mc);
             }
             else
             {
                 // MiniHUD Style
-                this.renderInventoryOverlay(this.getRenderContextNullable(), drawContext, mc,
+                this.renderInventoryOverlay(drawContext, this.getRenderContextNullable(), mc,
                                             true,
                                             true);
             }
@@ -233,9 +234,11 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
 
             if (world instanceof ServerWorld)
             {
-                if (entity.saveSelfNbt(nbt))
+                NbtView view = NbtView.getWriter(world.getRegistryManager());
+
+                if (entity.saveSelfData(view.getWriter()))
                 {
-                    return this.getTargetInventoryFromEntity(world.getEntityById(entity.getId()), nbt);
+                    return this.getTargetInventoryFromEntity(world.getEntityById(entity.getId()), view.readNbt());
                 }
             }
             else

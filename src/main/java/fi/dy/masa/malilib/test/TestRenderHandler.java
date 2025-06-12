@@ -15,7 +15,10 @@ import net.minecraft.block.entity.CrafterBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.BufferBuilderStorage;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.Frustum;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
@@ -67,7 +70,7 @@ public class TestRenderHandler implements IRenderer
     }
 
     @Override
-    public void onRenderGameOverlayLastDrawer(DrawContext drawContext, float partialTicks, Profiler profiler, MinecraftClient mc)
+    public void onRenderGameOverlayPostAdvanced(DrawContext drawContext, float partialTicks, Profiler profiler, MinecraftClient mc)
     {
         if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue())
         {
@@ -98,7 +101,7 @@ public class TestRenderHandler implements IRenderer
                 list.add("Test Line 4");
                 list.add("Test Line 5");
 
-                RenderUtils.renderText(4, 4, 0.5F, 0xFFE0E0E0, 0xA0505050, HudAlignment.TOP_LEFT, true, false, true, list, drawContext);
+                RenderUtils.renderText(drawContext, 4, 4, MaLiLibConfigs.Test.TEST_CONFIG_FLOAT.getFloatValue(), 0xFFE0E0E0, 0xA0505050, HudAlignment.TOP_LEFT, true, false, true, list);
             }
         }
     }
@@ -179,7 +182,7 @@ public class TestRenderHandler implements IRenderer
 //    }
 
     @Override
-    public void onRenderWorldPreWeather(Framebuffer fb, Matrix4f posMatrix, Matrix4f projMatrix, Frustum frustum, Camera camera, Fog fog, BufferBuilderStorage buffers, Profiler profiler)
+    public void onRenderWorldPreWeather(Framebuffer fb, Matrix4f posMatrix, Matrix4f projMatrix, Frustum frustum, Camera camera, BufferBuilderStorage buffers, Profiler profiler)
     {
 //        if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue())
 //        {
@@ -202,7 +205,7 @@ public class TestRenderHandler implements IRenderer
     }
 
     @Override
-    public void onRenderWorldLastAdvanced(Framebuffer fb, Matrix4f posMatrix, Matrix4f projMatrix, Frustum frustum, Camera camera, Fog fog, BufferBuilderStorage buffers, Profiler profiler)
+    public void onRenderWorldLastAdvanced(Framebuffer fb, Matrix4f posMatrix, Matrix4f projMatrix, Frustum frustum, Camera camera, BufferBuilderStorage buffers, Profiler profiler)
     {
         if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue())
         {
@@ -281,7 +284,7 @@ public class TestRenderHandler implements IRenderer
             if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() && GuiBase.isShiftDown())
             {
                 profiler.push(MaLiLibReference.MOD_ID + "_map_preview");
-                RenderUtils.renderMapPreview(stack, x, y, 160, false, drawContext);
+                RenderUtils.renderMapPreview(drawContext, stack, x, y, 160, false);
                 profiler.pop();
             }
         }
@@ -290,7 +293,7 @@ public class TestRenderHandler implements IRenderer
             if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() && GuiBase.isShiftDown())
             {
                 profiler.push(MaLiLibReference.MOD_ID + "_shulker_preview");
-                RenderUtils.renderShulkerBoxPreview(stack, x, y, true, drawContext);
+                RenderUtils.renderShulkerBoxPreview(drawContext, stack, x, y, true);
                 profiler.pop();
             }
         }
@@ -299,7 +302,7 @@ public class TestRenderHandler implements IRenderer
             if (MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() && GuiBase.isShiftDown())
             {
                 profiler.push(MaLiLibReference.MOD_ID + "_bundle_preview");
-                RenderUtils.renderBundlePreview(stack, x, y, MaLiLibConfigs.Test.TEST_BUNDLE_PREVIEW_WIDTH.getIntegerValue(), true, drawContext);
+                RenderUtils.renderBundlePreview(drawContext, stack, x, y, MaLiLibConfigs.Test.TEST_BUNDLE_PREVIEW_WIDTH.getIntegerValue(), true);
                 profiler.pop();
             }
         }
@@ -349,7 +352,7 @@ public class TestRenderHandler implements IRenderer
     }
 
     // OG / Tweakeroo method also
-    public static void renderInventoryOverlayOG(InventoryOverlay.Context context, DrawContext drawContext, MinecraftClient mc)
+    public static void renderInventoryOverlayOG(DrawContext drawContext, InventoryOverlay.Context context, MinecraftClient mc)
     {
         //MinecraftClient mc = MinecraftClient.getInstance();
         LivingEntity entityLivingBase = null;
@@ -445,28 +448,28 @@ public class TestRenderHandler implements IRenderer
                 horseInv.setStack(0, horseArmor != null && !horseArmor.isEmpty() ? horseArmor : ItemStack.EMPTY);
                 horseInv.setStack(1, inv.getStack(0));
 
-                InventoryOverlay.renderInventoryBackground(type, xInv, yInv, 1, 2, mc, drawContext);
+                InventoryOverlay.renderInventoryBackground(drawContext, type, xInv, yInv, 1, 2, mc);
                 if (type == InventoryOverlay.InventoryRenderType.LLAMA)
                 {
-                    InventoryOverlay.renderLlamaArmorBackgroundSlots(horseInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, drawContext);
+                    InventoryOverlay.renderLlamaArmorBackgroundSlots(drawContext, horseInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY);
                 }
                 else
                 {
-                    InventoryOverlay.renderHorseArmorBackgroundSlots(horseInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, drawContext);
+                    InventoryOverlay.renderHorseArmorBackgroundSlots(drawContext, horseInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY);
                 }
-                InventoryOverlay.renderInventoryStacks(type, horseInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, 1, 0, 2, mc, drawContext);
+                InventoryOverlay.renderInventoryStacks(drawContext, type, horseInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, 1, 0, 2, mc);
                 xInv += 32 + 4;
             }
 
             if (totalSlots > 0)
             {
-                InventoryOverlay.renderInventoryBackground(type, xInv, yInv, props.slotsPerRow, totalSlots, mc, drawContext);
+                InventoryOverlay.renderInventoryBackground(drawContext, type, xInv, yInv, props.slotsPerRow, totalSlots, mc);
                 // TODO 1.21.4+
                 if (type == InventoryOverlay.InventoryRenderType.BREWING_STAND)
                 {
-                    InventoryOverlay.renderBrewerBackgroundSlots(inv, xInv, yInv, drawContext);
+                    InventoryOverlay.renderBrewerBackgroundSlots(drawContext, inv, xInv, yInv);
                 }
-                InventoryOverlay.renderInventoryStacks(type, inv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, props.slotsPerRow, firstSlot, totalSlots, lockedSlots, mc, drawContext);
+                InventoryOverlay.renderInventoryStacks(drawContext, type, inv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, props.slotsPerRow, firstSlot, totalSlots, lockedSlots, mc);
             }
         }
 
@@ -491,15 +494,15 @@ public class TestRenderHandler implements IRenderer
             Inventory wolfInv = new SimpleInventory(2);
             ItemStack wolfArmor = ((WolfEntity) entityLivingBase).getBodyArmor();
             wolfInv.setStack(0, wolfArmor != null && !wolfArmor.isEmpty() ? wolfArmor : ItemStack.EMPTY);
-            InventoryOverlay.renderInventoryBackground(type, xInv, yInv, 1, 2, mc, drawContext);
-            InventoryOverlay.renderWolfArmorBackgroundSlots(wolfInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, drawContext);
-            InventoryOverlay.renderInventoryStacks(type, wolfInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, 1, 0, 2, mc, drawContext);
+            InventoryOverlay.renderInventoryBackground(drawContext, type, xInv, yInv, 1, 2, mc);
+            InventoryOverlay.renderWolfArmorBackgroundSlots(drawContext, wolfInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY);
+            InventoryOverlay.renderInventoryStacks(drawContext, type, wolfInv, xInv + props.slotOffsetX, yInv + props.slotOffsetY, 1, 0, 2, mc);
         }
 
         if (entityLivingBase != null)
         {
-            InventoryOverlay.renderEquipmentOverlayBackground(x, y, entityLivingBase, drawContext);
-            InventoryOverlay.renderEquipmentStacks(entityLivingBase, x, y, mc, drawContext);
+            InventoryOverlay.renderEquipmentOverlayBackground(drawContext, x, y, entityLivingBase);
+            InventoryOverlay.renderEquipmentStacks(drawContext, entityLivingBase, x, y, mc);
         }
     }
 }
