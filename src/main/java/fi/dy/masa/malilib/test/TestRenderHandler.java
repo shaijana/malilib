@@ -128,20 +128,25 @@ public class TestRenderHandler implements IRenderer
         String preMspt;
         boolean isEstimated = TickUtils.isMeasuredEstimated();
         boolean isSprinting = TickUtils.isSprinting();
+        String sprintStr = isSprinting ? "- "+GuiBase.TXT_LIGHT_PURPLE+GuiBase.TXT_BOLD+"Sprinting"+rst : "";
 
         if      (mspt <= 40) { preMspt = GuiBase.TXT_GREEN; }
         else if (mspt <= 45) { preMspt = GuiBase.TXT_YELLOW; }
         else if (mspt <= 50) { preMspt = GuiBase.TXT_GOLD; }
         else                 { preMspt = GuiBase.TXT_RED; }
 
-        if (isSprinting)
-        {
-            System.out.print("TEST: SPRINTING!\n");
-        }
-
         return isEstimated ?
-               String.format("ClampedTPS: %s%.1f%s (MSPT [est]: %s%.1f%s) (tR: %s%.1f%s, avMS: %.1f, avTR: %.1f, [actTR: %.1f])", preTps, clampedTps, rst, preMspt, mspt, rst, GuiBase.TXT_GREEN, tickRate, rst, avgMspt, avgTps, actualTps) :
-               String.format("ClampedTPS: %s%.1f%s MSPT: %s%.1f%s (tR: %s%.1f%s, avMS: %.1f, avTR: %.1f, [actTR: %.1f])", preTps, clampedTps, rst, preMspt, mspt, rst, GuiBase.TXT_GREEN, tickRate, rst, avgMspt, avgTps, actualTps);
+               String.format("Server TPS: %s%.1f%s (MSPT [est]: %s%.1f%s) (R: %s%.1f%s, avMS: %.2f, avTPS: %.2f, [actTPS: %.2f]) %s",
+                             preTps, clampedTps, rst, preMspt, mspt, rst,
+                             GuiBase.TXT_AQUA, tickRate, rst,
+                             avgMspt, avgTps, actualTps,
+                             sprintStr) :
+               String.format("Server TPS: %s%.1f%s MSPT: %s%.1f%s (R: %s%.1f%s, avMS: %.2f, avTPS: %.2f, [actTPS: %.2f]) %s",
+                             preTps, clampedTps, rst, preMspt, mspt, rst,
+                             GuiBase.TXT_AQUA, tickRate, rst,
+                             avgMspt, avgTps, actualTps,
+                             sprintStr)
+                ;
     }
 
 //    @Override
