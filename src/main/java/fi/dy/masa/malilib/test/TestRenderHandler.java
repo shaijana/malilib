@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 import org.jetbrains.annotations.ApiStatus;
 import org.joml.Matrix4f;
 
@@ -53,6 +54,7 @@ import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.data.Color4f;
 import fi.dy.masa.malilib.util.game.BlockUtils;
 import fi.dy.masa.malilib.util.nbt.NbtBlockUtils;
+import fi.dy.masa.malilib.util.time.TickUtils;
 
 @ApiStatus.Experimental
 public class TestRenderHandler implements IRenderer
@@ -100,10 +102,46 @@ public class TestRenderHandler implements IRenderer
                 list.add("Test Line 3");
                 list.add("Test Line 4");
                 list.add("Test Line 5");
+                
+                if (TickUtils.getInstance().isValid())
+                {
+                    String result = getMeasuredTPS();
+                    list.addFirst(result);
+                    list.removeLast();
+                }
 
                 RenderUtils.renderText(drawContext, 4, 4, MaLiLibConfigs.Test.TEST_CONFIG_FLOAT.getFloatValue(), 0xFFE0E0E0, 0xA0505050, HudAlignment.TOP_LEFT, true, false, true, list);
             }
         }
+    }
+
+    private static @Nonnull String getMeasuredTPS()
+    {
+        final float tickRate = TickUtils.getTickRate();
+        final double clampedTps = TickUtils.getMeasuredTPS();
+        final double actualTps = TickUtils.getActualTPS();
+        final double avgMspt = TickUtils.getAvgMSPT();
+        final double avgTps = TickUtils.getAvgTPS();
+        final double mspt = TickUtils.getMeasuredMSPT();
+        final String rst = GuiBase.TXT_RST;
+        final String preTps = clampedTps >= tickRate ? GuiBase.TXT_GREEN : GuiBase.TXT_RED;
+        String preMspt;
+        boolean isEstimated = TickUtils.isMeasuredEstimated();
+        boolean isSprinting = TickUtils.isSprinting();
+
+        if      (mspt <= 40) { preMspt = GuiBase.TXT_GREEN; }
+        else if (mspt <= 45) { preMspt = GuiBase.TXT_YELLOW; }
+        else if (mspt <= 50) { preMspt = GuiBase.TXT_GOLD; }
+        else                 { preMspt = GuiBase.TXT_RED; }
+
+        if (isSprinting)
+        {
+            System.out.print("TEST: SPRINTING!\n");
+        }
+
+        return isEstimated ?
+               String.format("ClampedTPS: %s%.1f%s (MSPT [est]: %s%.1f%s) (tR: %s%.1f%s, avMS: %.1f, avTR: %.1f, [actTR: %.1f])", preTps, clampedTps, rst, preMspt, mspt, rst, GuiBase.TXT_GREEN, tickRate, rst, avgMspt, avgTps, actualTps) :
+               String.format("ClampedTPS: %s%.1f%s MSPT: %s%.1f%s (tR: %s%.1f%s, avMS: %.1f, avTR: %.1f, [actTR: %.1f])", preTps, clampedTps, rst, preMspt, mspt, rst, GuiBase.TXT_GREEN, tickRate, rst, avgMspt, avgTps, actualTps);
     }
 
 //    @Override

@@ -3,7 +3,6 @@ package fi.dy.masa.malilib;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

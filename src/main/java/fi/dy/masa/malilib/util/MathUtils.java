@@ -13,9 +13,9 @@ public class MathUtils
     /**
      * @return The average value of the elements in the given array
      */
-    public static double average(int[] arr)
+    public static double average(int[] values)
     {
-        final int size = arr.length;
+        final int size = values.length;
 
         if (size == 0)
         {
@@ -24,9 +24,9 @@ public class MathUtils
 
         long sum = 0;
 
-        for (int i = 0; i < size; ++i)
+        for (int value : values)
         {
-            sum += arr[i];
+            sum += value;
         }
 
         return (double) sum / (double) size;
@@ -35,9 +35,9 @@ public class MathUtils
     /**
      * @return The average value of the elements in the given array
      */
-    public static double average(long[] arr)
+    public static double average(long[] values)
     {
-        final int size = arr.length;
+        final int size = values.length;
 
         if (size == 0)
         {
@@ -46,9 +46,9 @@ public class MathUtils
 
         long sum = 0;
 
-        for (int i = 0; i < size; ++i)
+        for (long value : values)
         {
-            sum += arr[i];
+            sum += value;
         }
 
         return (double) sum / (double) size;
@@ -57,9 +57,9 @@ public class MathUtils
     /**
      * @return The average value of the elements in the given array
      */
-    public static double average(double[] arr)
+    public static double average(double[] values)
     {
-        final int size = arr.length;
+        final int size = values.length;
 
         if (size == 0)
         {
@@ -68,9 +68,9 @@ public class MathUtils
 
         double sum = 0;
 
-        for (int i = 0; i < size; ++i)
+        for (double value : values)
         {
-            sum += arr[i];
+            sum += value;
         }
 
         return sum / (double) size;
