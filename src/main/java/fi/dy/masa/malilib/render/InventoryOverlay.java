@@ -106,6 +106,11 @@ public class InventoryOverlay
     public static final Identifier TEXTURE_EMPTY_SLOT_UPGRADE    = Identifier.ofVanilla("container/slot/smithing_template_netherite_upgrade");
     public static final Identifier TEXTURE_EMPTY_SLOT_SWORD      = Identifier.ofVanilla("container/slot/sword");
 
+    // Other Slot-Related textures (Nine-Slice Slots w/mcmeta)
+    public static final Identifier TEXTURE_EMPTY_SLOT            = Identifier.ofVanilla("container/slot");
+    public static final Identifier TEXTURE_HIGHLIGHT_BACK        = Identifier.ofVanilla("container/slot_highlight_back");
+    public static final Identifier TEXTURE_HIGHLIGHT_FRONT       = Identifier.ofVanilla("container/slot_highlight_front");
+
     private static final EquipmentSlot[] VALID_EQUIPMENT_SLOTS = new EquipmentSlot[] { EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET };
     public static final InventoryProperties INV_PROPS_TEMP = new InventoryProperties();
 
@@ -319,7 +324,7 @@ public class InventoryOverlay
         {
             renderLlamaArmorBackgroundSlots(drawContext, inv, x, y);
         }
-        else if (type == InventoryRenderType.WOLF)
+        else if (type == InventoryRenderType.WOLF || type == InventoryRenderType.HAPPY_GHAST)
         {
             renderWolfArmorBackgroundSlots(drawContext, inv, x, y);
         }
@@ -449,8 +454,13 @@ public class InventoryOverlay
         }
     }
 
-    public static InventoryRenderType getInventoryType(Inventory inv)
+    public static InventoryRenderType getInventoryType(@Nullable Inventory inv)
     {
+        if (inv == null)
+        {
+            return InventoryRenderType.GENERIC;
+        }
+
         if (inv instanceof ShulkerBoxBlockEntity)
         {
             return InventoryRenderType.FIXED_27;
@@ -515,6 +525,7 @@ public class InventoryOverlay
                 return InventoryRenderType.VILLAGER;
             }
         }
+
         return InventoryRenderType.GENERIC;
     }
 
@@ -532,15 +543,15 @@ public class InventoryOverlay
                 final int size = ((IMixinContainerComponent) (Object) container).malilib_getStacks().size();
 
                 // For "Double Inventory" Barrels, etc.
-                if (size >= 0 && size < 27)
+                if (size >= 0 && size <= 27)
                 {
                     return InventoryRenderType.FIXED_27;
                 }
-                else if (size >= 27 && size < 54)
+                else if (size > 27 && size <= 54)
                 {
                     return InventoryRenderType.FIXED_54;
                 }
-                else if (size >= 54 && size < 256)
+                else if (size > 54 && size < 256)
                 {
                     return InventoryRenderType.GENERIC;
                 }
@@ -676,11 +687,11 @@ public class InventoryOverlay
                 return InventoryRenderType.HOPPER;
             }
             else if (entityType.equals(EntityType.HORSE) ||
-                entityType.equals(EntityType.DONKEY) ||
-                entityType.equals(EntityType.MULE) ||
-                entityType.equals(EntityType.CAMEL) ||
-                entityType.equals(EntityType.SKELETON_HORSE) ||
-                entityType.equals(EntityType.ZOMBIE_HORSE))
+                     entityType.equals(EntityType.DONKEY) ||
+                     entityType.equals(EntityType.MULE) ||
+                     entityType.equals(EntityType.CAMEL) ||
+                     entityType.equals(EntityType.SKELETON_HORSE) ||
+                     entityType.equals(EntityType.ZOMBIE_HORSE))
             {
                 return InventoryRenderType.HORSE;
             }
@@ -692,6 +703,10 @@ public class InventoryOverlay
             else if (entityType.equals(EntityType.WOLF))
             {
                 return InventoryRenderType.WOLF;
+            }
+            else if (entityType.equals(EntityType.HAPPY_GHAST))
+            {
+                return InventoryRenderType.HAPPY_GHAST;
             }
             else if (entityType.equals(EntityType.VILLAGER) ||
                      entityType.equals(EntityType.ALLAY) ||
@@ -746,7 +761,7 @@ public class InventoryOverlay
      * @param ctx
      * @return
      */
-    public static InventoryRenderType getBestInventoryType(@Nonnull Inventory inv, @Nonnull NbtCompound nbt, Context ctx)
+    public static InventoryRenderType getBestInventoryType(@Nullable Inventory inv, @Nonnull NbtCompound nbt, Context ctx)
     {
         InventoryRenderType i = getInventoryType(inv);
         InventoryRenderType n = getInventoryType(nbt);
@@ -968,6 +983,8 @@ public class InventoryOverlay
             {
                 maxSlots = slots;
             }
+
+//            LOGGER.debug("renderInventoryStacks: slotsPerRow [{}], startSlot [{}], maxSlots [{}]", slotsPerRow, startSlot, maxSlots);
 
             for (int slot = startSlot, i = 0; slot < slots && i < maxSlots; )
             {
@@ -1287,6 +1304,7 @@ public class InventoryOverlay
         HORSE,
         LLAMA,
         WOLF,
+        HAPPY_GHAST,
         FIXED_27,
         FIXED_54,
         VILLAGER,

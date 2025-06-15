@@ -511,7 +511,7 @@ public class InventoryUtils
 //            DefaultedList<ItemStack> items = DefaultedList.ofSize(slotCount, ItemStack.EMPTY);
 //            Inventories.readData(nbt, items, registry);
 
-            NbtInventory nbtInv = NbtInventory.fromNbtList(list);
+            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false);
 
             return nbtInv.toVanillaList();
         }
@@ -662,14 +662,14 @@ public class InventoryUtils
 //                inv.setStack(i, items.get(i).copy());
 //            }
 
-            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS);
+            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS, false);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
                 return null;
             }
 
-            return nbtInv.toInventory();
+            return nbtInv.toInventory(slotCount);
         }
         else if (nbt.contains(NbtKeys.INVENTORY))
         {
@@ -688,14 +688,15 @@ public class InventoryUtils
 //                return null;
 //            }
 
-            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.INVENTORY);
+            // "Inventory" tags do not include Slot ID's
+            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.INVENTORY, true);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
                 return null;
             }
 
-            return nbtInv.toInventory();
+            return nbtInv.toInventory(slotCount);
         }
         else if (nbt.contains(NbtKeys.ENDER_ITEMS))
         {
@@ -714,14 +715,14 @@ public class InventoryUtils
 //                return null;
 //            }
 
-            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ENDER_ITEMS);
+            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ENDER_ITEMS, false);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
                 return null;
             }
 
-            return nbtInv.toInventory();
+            return nbtInv.toInventory(slotCount);
         }
         else if (nbt.contains(NbtKeys.ITEM))
         {
@@ -794,7 +795,7 @@ public class InventoryUtils
 //            Inventories.readNbt(nbt, items, registry);
             inv.setStack(0, horseEquipment.getLast());
 
-            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS);
+            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS, false);
 
             // Chested Horse
             if (nbtInv != null && !nbtInv.isEmpty())
@@ -848,11 +849,12 @@ public class InventoryUtils
         {
 //            EnderChestInventory inv = new EnderChestInventory();
 //            inv.readDataList(nbt.getListOrEmpty(NbtKeys.ENDER_ITEMS), registry);
+            NbtList list = nbt.getListOrEmpty(NbtKeys.ENDER_ITEMS);
 
-            NbtInventory nbtInv = NbtInventory.fromNbtList(nbt.getListOrEmpty(NbtKeys.ENDER_ITEMS));
+            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false);
             if (nbtInv == null) return null;
 
-            return (EnderChestInventory) nbtInv.toInventory();
+            return (EnderChestInventory) nbtInv.toInventory(list.size());
         }
 
         return null;

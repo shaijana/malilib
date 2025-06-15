@@ -14,6 +14,7 @@ import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.MathHelper;
 
+import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.util.log.AnsiLogger;
 
 /**
@@ -149,7 +150,7 @@ public class NbtInventory implements AutoCloseable
      * Supports oversized Inventories (MAX_SIZE) and DoubleInventory (DOUBLE_SIZE); or defaults to (DEFAULT_SIZE)
      * @return ()
      */
-    public @Nullable Inventory toInventory()
+    public @Nullable Inventory toInventory(final int size)
     {
         if (this.isEmpty())
         {
@@ -158,25 +159,28 @@ public class NbtInventory implements AutoCloseable
 
         Inventory inv;
 
-        if (this.size() > DOUBLE_SIZE)
+        int sizeAdj = Math.clamp(size, this.size(), MAX_SIZE);
+
+        if (sizeAdj > DOUBLE_SIZE)
         {
-            inv = new SimpleInventory(MAX_SIZE);
+            inv = new SimpleInventory(Math.clamp(size, this.size(), MAX_SIZE));
         }
-        else if (this.size() >= DEFAULT_SIZE && this.size() <= DOUBLE_SIZE)
+        else if (sizeAdj > DEFAULT_SIZE && sizeAdj < DOUBLE_SIZE)
         {
             inv = new DoubleInventory(new SimpleInventory(DEFAULT_SIZE), new SimpleInventory(DEFAULT_SIZE));
         }
         else
         {
-            inv = new SimpleInventory(DEFAULT_SIZE);
+            inv = new SimpleInventory(Math.clamp(size, this.size(), DEFAULT_SIZE));
         }
 
+//        LOGGER.warn("toInventory(): inv size [{}]", inv.size());
         AtomicInteger i = new AtomicInteger(0);
 
         this.items.forEach(
                 (slot) ->
                 {
-                    //LOGGER.info("toInventory():[{}]: slot [{}], stack: [{}]", i.get(), slot.slot(), slot.stack().toString());
+//                    LOGGER.info("toInventory():[{}]: slot [{}], stack: [{}]", i.get(), slot.slot(), slot.stack().toString());
                     inv.setStack(slot.slot(), slot.stack());
                     i.getAndIncrement();
                 }
@@ -329,10 +333,11 @@ public class NbtInventory implements AutoCloseable
      * Creates a new NbtInventory from a Nbt Type (List or Compound) using a key; retains slot information.
      * @param nbtIn ()
      * @param key ()
+     * @param noSlotId (If the List doesn't include Slots, generate them using inventory index)
      * @return ()
      * @throws RuntimeException ()
      */
-    public static @Nullable NbtInventory fromNbt(@Nonnull NbtCompound nbtIn, String key) throws RuntimeException
+    public static @Nullable NbtInventory fromNbt(@Nonnull NbtCompound nbtIn, String key, boolean noSlotId) throws RuntimeException
     {
         if (nbtIn.isEmpty() || !nbtIn.contains(key))
         {
@@ -341,7 +346,7 @@ public class NbtInventory implements AutoCloseable
 
         if (Objects.requireNonNull(nbtIn.get(key)).getNbtType() == NbtList.TYPE)
         {
-            return fromNbtList(nbtIn.getListOrEmpty(key));
+            return fromNbtList(nbtIn.getListOrEmpty(key), noSlotId);
         }
         else if (Objects.requireNonNull(nbtIn.get(key)).getNbtType() == NbtCompound.TYPE)
         {
@@ -379,10 +384,11 @@ public class NbtInventory implements AutoCloseable
     /**
      * Creates a new NbtInventory from an NbtList; utilizing Slot information.
      * @param list ()
+     * @param noSlotId (If the List doesn't include Slots, generate them using inventory index)
      * @return ()
      * @throws RuntimeException ()
      */
-    public static @Nullable NbtInventory fromNbtList(@Nonnull NbtList list) throws RuntimeException
+    public static @Nullable NbtInventory fromNbtList(@Nonnull NbtList list, boolean noSlotId) throws RuntimeException
     {
         if (list.isEmpty())
         {
@@ -393,15 +399,28 @@ public class NbtInventory implements AutoCloseable
             throw new RuntimeException("Nbt List is too large!");
         }
 
-        NbtInventory newInv = new NbtInventory();
         int size = list.size();
         size = MathHelper.clamp(size, 1, MAX_SIZE);
+        NbtInventory newInv = NbtInventory.create(size);
         newInv.items = new HashSet<>();
+
+//        LOGGER.info("fromNbtList(): listSize: [{}], invSize: [{}]", list.size(), size);
 
         for (int i = 0; i < size; i++)
         {
-            StackWithSlot slot = StackWithSlot.CODEC.parse(NbtOps.INSTANCE, list.get(i)).getPartialOrThrow();
-            //LOGGER.info("fromNbtList(): [{}]: slot [{}], stack: [{}]", i, slot.slot(), slot.stack().toString());
+            StackWithSlot slot;
+
+            // Some lists, such as the "Inventory" tag does not include slot ID's
+            if (noSlotId)
+            {
+                slot = new StackWithSlot(i, ItemStack.CODEC.parse(NbtOps.INSTANCE, list.get(i)).getPartialOrThrow());
+            }
+            else
+            {
+                slot = StackWithSlot.CODEC.parse(NbtOps.INSTANCE, list.get(i)).getPartialOrThrow();
+            }
+
+//            LOGGER.info("fromNbtList(): [{}]: slot [{}], stack: [{}]", i, slot.slot(), slot.stack().toString());
             newInv.items.add(slot);
         }
 

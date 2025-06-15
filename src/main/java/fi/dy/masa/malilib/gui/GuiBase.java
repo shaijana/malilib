@@ -191,10 +191,8 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
             this.drawContext = drawContext;
         }
 
-//        RenderUtils.popAllCheckpoints(drawContext);
-//        RenderUtils.popAllLayers(drawContext);
         drawContext.createNewRootLayer();
-        //RenderUtils.forceDraw(drawContext);
+
         // Draw Background / Title
         this.drawScreenBackground(drawContext, mouseX, mouseY);
         this.drawTitle(drawContext, mouseX, mouseY, partialTicks);
@@ -212,6 +210,12 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
     public DrawContext getDrawContext()
     {
         return this.drawContext;
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks)
+    {
+        // NO BLUR / MASKING
     }
 
     @Override
@@ -588,7 +592,6 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
     protected void drawScreenBackground(DrawContext drawContext, int mouseX, int mouseY)
     {
         // Draw the dark background
-//        RenderUtils.forceDraw(drawContext);
         RenderUtils.drawRect(drawContext, 0, 0, this.width, this.height, TOOLTIP_BACKGROUND);
     }
 
@@ -627,20 +630,16 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
     {
         for (ButtonBase button : this.buttons)
         {
-            //RenderUtils.forceDraw(drawContext);
             button.render(drawContext, mouseX, mouseY, button.isMouseOver());
         }
     }
 
     protected void drawTextFields(DrawContext drawContext, int mouseX, int mouseY)
     {
-//        RenderUtils.applyLayer(drawContext, GuiLayer.NONE);
         for (TextFieldWrapper<?> entry : this.textFields)
         {
-            //RenderUtils.forceDraw(drawContext);
             entry.draw(drawContext, mouseX, mouseY);
         }
-//        RenderUtils.applyLayer(drawContext, GuiLayer.NONE);
     }
 
     protected void drawWidgets(DrawContext drawContext, int mouseX, int mouseY)
@@ -651,7 +650,6 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         {
             for (WidgetBase widget : this.widgets)
             {
-//                RenderUtils.forceDraw(drawContext);
                 widget.render(drawContext, mouseX, mouseY, false);
 
                 if (widget.isMouseOver(mouseX, mouseY))
@@ -673,7 +671,6 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         {
             if (button.hasHoverText() && button.isMouseOver())
             {
-//                RenderUtils.forceDraw(drawContext);
                 RenderUtils.drawHoverText(drawContext, mouseX, mouseY, button.getHoverStrings());
             }
         }
@@ -693,14 +690,7 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
 
         if (this.hoveredWidget != null)
         {
-//            RenderUtils.forceDraw(drawContext);
-//            RenderUtils.applyLayer(drawContext, type);
             this.hoveredWidget.postRenderHovered(drawContext, mouseX, mouseY, false);
-
-//            if (type != GuiLayer.NONE)
-//            {
-//                RenderUtils.applyLayer(drawContext, GuiLayer.POP);
-//            }
         }
     }
 

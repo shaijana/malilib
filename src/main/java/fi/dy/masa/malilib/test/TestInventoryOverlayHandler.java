@@ -13,10 +13,11 @@ import net.minecraft.block.entity.EnderChestBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.InventoryOwner;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.PiglinEntity;
-import net.minecraft.entity.passive.AbstractHorseEntity;
-import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.mob.PillagerEntity;
+import net.minecraft.entity.passive.*;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EnderChestInventory;
 import net.minecraft.inventory.Inventory;
@@ -30,6 +31,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profiler;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
 import fi.dy.masa.malilib.MaLiLib;
@@ -43,6 +45,7 @@ import fi.dy.masa.malilib.render.InventoryOverlay;
 import fi.dy.masa.malilib.util.EntityUtils;
 import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.malilib.util.WorldUtils;
+import fi.dy.masa.malilib.util.game.RayTraceUtils;
 import fi.dy.masa.malilib.util.nbt.NbtBlockUtils;
 import fi.dy.masa.malilib.util.nbt.NbtKeys;
 import fi.dy.masa.malilib.util.nbt.NbtView;
@@ -173,9 +176,8 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
             return null;
         }
 
-        HitResult trace = TestRayTraceUtils.getRayTraceFromEntity(world, cameraEntity, false);
-        // todo the Post-Rewrite needs fixing.
-        //HitResult trace = RayTraceUtils.getRayTraceFromEntity(world, cameraEntity, RayTraceUtils.RayTraceFluidHandling.NONE);
+//        HitResult trace = TestRayTraceUtils.getRayTraceFromEntity(world, cameraEntity, false);
+        HitResult trace = RayTraceUtils.getRayTraceFromEntity(world, cameraEntity, RaycastContext.FluidHandling.NONE);
         NbtCompound nbt = new NbtCompound();
 
         if (trace == null || trace.getType() == HitResult.Type.MISS)
@@ -359,17 +361,13 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
         {
             inv = new SimpleInventory(player.getInventory().getMainStacks().toArray(new ItemStack[36]));
         }
-        else if (entity instanceof VillagerEntity)
-        {
-            inv = ((VillagerEntity) entity).getInventory();
-        }
         else if (entity instanceof AbstractHorseEntity)
         {
             inv = ((IMixinAbstractHorseEntity) entity).malilib_getHorseInventory();
         }
-        else if (entity instanceof PiglinEntity)
+        else if (entity instanceof InventoryOwner)
         {
-            inv = ((IMixinPiglinEntity) entity).malilib_getInventory();
+            inv = ((InventoryOwner) entity).getInventory();
         }
         if (!nbt.isEmpty())
         {
