@@ -129,6 +129,15 @@ public class TickUtils
     }
 
     /**
+     * Return whether the Tick Data is valid.
+     * @return ()
+     */
+    public static boolean isValid()
+    {
+        return getInstance().isValid();
+    }
+
+    /**
      * Return the measured / calculated MSPT
      * @return ()
      */

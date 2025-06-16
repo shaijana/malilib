@@ -218,7 +218,7 @@ public class NbtInventory implements AutoCloseable
      * @param registry ()
      * @return ()
      */
-    public @Nullable NbtView toNbtView(@Nonnull DynamicRegistryManager registry)
+    public @Nullable NbtView toNbtWriterView(@Nonnull DynamicRegistryManager registry)
     {
         if (this.isEmpty())
         {
@@ -241,7 +241,7 @@ public class NbtInventory implements AutoCloseable
      * @param size ()
      * @return ()
      */
-    public static @Nullable NbtInventory fromNbtView(@Nonnull NbtView view, int size)
+    public static @Nullable NbtInventory fromNbtReaderView(@Nonnull NbtView view, int size)
     {
         if (size < 1)
         {

@@ -51,13 +51,12 @@ import net.minecraft.village.TradeOfferList;
 import net.minecraft.world.World;
 
 import fi.dy.masa.malilib.MaLiLib;
-import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.mixin.entity.IMixinPlayerEntity;
 import fi.dy.masa.malilib.util.log.AnsiLogger;
 import fi.dy.masa.malilib.util.nbt.NbtEntityUtils;
 import fi.dy.masa.malilib.util.nbt.NbtInventory;
 import fi.dy.masa.malilib.util.nbt.NbtKeys;
-import fi.dy.masa.malilib.util.data.Constants;
+import fi.dy.masa.malilib.util.nbt.NbtView;
 
 public class InventoryUtils
 {
@@ -856,21 +855,17 @@ public class InventoryUtils
     }
 
     @Nullable
-    public static EnderChestInventory getPlayerEnderItemsFromNbt(@Nonnull NbtCompound nbt, @Nonnull RegistryWrapper.WrapperLookup registry)
+    public static EnderChestInventory getPlayerEnderItemsFromNbt(@Nonnull NbtCompound nbt, @Nonnull DynamicRegistryManager registry)
     {
         if (nbt.contains(NbtKeys.ENDER_ITEMS))
         {
-//            EnderChestInventory inv = new EnderChestInventory();
-//            inv.readDataList(nbt.getListOrEmpty(NbtKeys.ENDER_ITEMS), registry);
-            NbtList list = nbt.getListOrEmpty(NbtKeys.ENDER_ITEMS);
-            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false);
+            EnderChestInventory inv = new EnderChestInventory();
+            NbtView view = NbtView.getReader(nbt, registry);
 
-            if (nbtInv == null || nbtInv.isEmpty())
-            {
-                return null;
-            }
+            inv.readData(view.getReader().getTypedListView(NbtKeys.ENDER_ITEMS, StackWithSlot.CODEC));
 
-            return (EnderChestInventory) nbtInv.toInventory(Math.max(list.size(), NbtInventory.DEFAULT_SIZE));
+            return inv;
+//            return (EnderChestInventory) nbtInv.toInventory(Math.max(list.size(), NbtInventory.DEFAULT_SIZE));
         }
 
         return null;
