@@ -1841,6 +1841,7 @@ public class RenderUtils
             {
                 return;
             }
+
             DefaultedList<ItemStack> items = InventoryUtils.getNbtItems(itemsTag, -1, mc().world.getRegistryManager());
 
             if (items.size() == 0)

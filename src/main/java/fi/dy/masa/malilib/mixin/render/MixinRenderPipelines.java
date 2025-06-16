@@ -42,6 +42,7 @@ public abstract class MixinRenderPipelines
     @Shadow @Final public static RenderPipeline.Snippet TRANSFORMS_PROJECTION_FOG_LIGHTING_SNIPPET; // TRANSFORMS_PROJECTION_FOG_LIGHTING_SNIPPET
     @Shadow @Final public static RenderPipeline.Snippet TERRAIN_SNIPPET;                            // TERRAIN
     @Shadow @Final public static RenderPipeline.Snippet ENTITY_SNIPPET;                             // ENTITY
+    @Shadow @Final public static RenderPipeline.Snippet ENTITY_EMISSIVE_SNIPPET;                    // ENTITY_EMISSIVE_SNIPPET
     @Shadow @Final public static RenderPipeline.Snippet RENDERTYPE_BEACON_BEAM_SNIPPET;             // RENDERTYPE_BEACON_BEAM
     @Shadow @Final public static RenderPipeline.Snippet TEXT_SNIPPET;                               // TEXT
     @Shadow @Final public static RenderPipeline.Snippet RENDERTYPE_END_PORTAL_SNIPPET;              // RENDERTYPE_END_PORTAL
@@ -65,17 +66,10 @@ public abstract class MixinRenderPipelines
         return renderPipeline;
     }
 
-// Common Uniforms
-//      .withUniform("ModelViewMat", UniformType.MATRIX4X4)
-//		.withUniform("ProjMat",      UniformType.MATRIX4X4)
-//		.withUniform("FogStart",     UniformType.FLOAT)
-//		.withUniform("FogEnd",       UniformType.FLOAT)
-//		.withUniform("FogShape",     UniformType.INT)
-
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void malilib_onRegisterPipelines(CallbackInfo ci)
     {
-        // STAGES
+        // SNIPPETS
         MaLiLibPipelines.POSITION_TRANSLUCENT_STAGE =
                 RenderPipeline.builder(TRANSFORMS_PROJECTION_FOG_SNIPPET)
                               .withVertexShader("core/position")

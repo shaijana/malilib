@@ -14,7 +14,6 @@ import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.MathHelper;
 
-import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.util.log.AnsiLogger;
 
 /**
@@ -94,21 +93,23 @@ public class NbtInventory implements AutoCloseable
      * Return this Inventory as a DefaultList<ItemStack>
      * @return ()
      */
-    public DefaultedList<ItemStack> toVanillaList()
+    public DefaultedList<ItemStack> toVanillaList(int size)
     {
         if (this.isEmpty())
         {
             return DefaultedList.of();
         }
 
-        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.size(), ItemStack.EMPTY);
+        size = Math.clamp(size, this.size(), MAX_SIZE);
+
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(size, ItemStack.EMPTY);
         AtomicInteger i = new AtomicInteger(0);
 
         this.items.forEach(
                 (slot) ->
                     {
                         list.set(slot.slot(), slot.stack());
-                        //LOGGER.info("toVanillaList():[{}]: slot [{}], stack: [{}]", i.get(), slot.slot(), slot.stack().toString());
+//                        LOGGER.info("toVanillaList():[{}]: slot [{}], stack: [{}]", i.get(), slot.slot(), slot.stack().toString());
                         i.getAndIncrement();
                     }
         );
@@ -138,7 +139,7 @@ public class NbtInventory implements AutoCloseable
         for (int i = 0; i < size; i++)
         {
             StackWithSlot slot = new StackWithSlot(i, list.get(i));
-            //LOGGER.info("fromVanillaList():[{}]: slot [{}], stack: [{}]", i, slot.slot(), slot.stack().toString());
+//            LOGGER.info("fromVanillaList():[{}]: slot [{}], stack: [{}]", i, slot.slot(), slot.stack().toString());
             newInv.items.add(slot);
         }
 
@@ -205,7 +206,7 @@ public class NbtInventory implements AutoCloseable
         for (int i = 0; i < size; i++)
         {
             StackWithSlot slot = new StackWithSlot(i, inv.getStack(i));
-            //LOGGER.info("fromInventory():[{}]: slot [{}], stack: [{}]", i, slot.slot(), slot.stack().toString());
+//            LOGGER.info("fromInventory():[{}]: slot [{}], stack: [{}]", i, slot.slot(), slot.stack().toString());
             newInv.items.add(slot);
         }
 
@@ -224,8 +225,10 @@ public class NbtInventory implements AutoCloseable
             return null;
         }
 
+        final int size = Math.max(this.size(), DEFAULT_SIZE);
+
         NbtView view = NbtView.getWriter(registry);
-        DefaultedList<ItemStack> list = this.toVanillaList();
+        DefaultedList<ItemStack> list = this.toVanillaList(size);
 
         Inventories.writeData(Objects.requireNonNull(view.getWriter()), list);
 
@@ -264,9 +267,16 @@ public class NbtInventory implements AutoCloseable
             throw new RuntimeException("Inventory is too large for a single entry!");
         }
 
-        NbtElement element = StackWithSlot.CODEC.encodeStart(NbtOps.INSTANCE, this.items.stream().findFirst().orElseThrow()).getPartialOrThrow();
-        //LOGGER.info("toNbtSingle(): --> nbt: [{}]", element.toString());
-        return element;
+        StackWithSlot slot = this.items.stream().findFirst().orElseThrow();
+
+        if (!slot.stack().isEmpty())
+        {
+            NbtElement element = StackWithSlot.CODEC.encodeStart(NbtOps.INSTANCE, slot).getPartialOrThrow();
+//            LOGGER.info("toNbtSingle(): --> nbt: [{}]", element.toString());
+            return element;
+        }
+
+        return new NbtCompound();
     }
 
     /**
@@ -286,9 +296,12 @@ public class NbtInventory implements AutoCloseable
         this.items.forEach(
                 (slot) ->
                 {
-                    NbtElement element = StackWithSlot.CODEC.encodeStart(NbtOps.INSTANCE, slot).getPartialOrThrow();
-                    //LOGGER.info("toNbtList(): slot [{}] --> nbt: [{}]", slot.slot(), element.toString());
-                    nbt.add(element);
+                    if (!slot.stack().isEmpty())
+                    {
+                        NbtElement element = StackWithSlot.CODEC.encodeStart(NbtOps.INSTANCE, slot).getPartialOrThrow();
+//                        LOGGER.info("toNbtList(): slot [{}] --> nbt: [{}]", slot.slot(), element.toString());
+                        nbt.add(element);
+                    }
                 }
         );
 

@@ -41,6 +41,6 @@ public abstract class MixinMinecraftServer
     @Inject(method = "pushTickLog", at = @At("HEAD"))
     private void malilib_onServerTick(long tickStartTime, CallbackInfo ci)
     {
-        TickUtils.getInstance().updateNanoTickFromServer((MinecraftServer) (Object) this);
+        TickUtils.getInstance().updateNanoTickFromIntegratedServer((MinecraftServer) (Object) this);
     }
 }

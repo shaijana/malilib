@@ -15,9 +15,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.InventoryOwner;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.PiglinEntity;
-import net.minecraft.entity.mob.PillagerEntity;
-import net.minecraft.entity.passive.*;
+import net.minecraft.entity.passive.AbstractHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EnderChestInventory;
 import net.minecraft.inventory.Inventory;
@@ -40,7 +38,6 @@ import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.interfaces.IDataSyncer;
 import fi.dy.masa.malilib.interfaces.IInventoryOverlayHandler;
 import fi.dy.masa.malilib.mixin.entity.IMixinAbstractHorseEntity;
-import fi.dy.masa.malilib.mixin.entity.IMixinPiglinEntity;
 import fi.dy.masa.malilib.render.InventoryOverlay;
 import fi.dy.masa.malilib.util.EntityUtils;
 import fi.dy.masa.malilib.util.InventoryUtils;
@@ -178,6 +175,7 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
 
 //        HitResult trace = TestRayTraceUtils.getRayTraceFromEntity(world, cameraEntity, false);
         HitResult trace = RayTraceUtils.getRayTraceFromEntity(world, cameraEntity, RaycastContext.FluidHandling.NONE);
+//        HitResult trace = mc.crosshairTarget;
         NbtCompound nbt = new NbtCompound();
 
         if (trace == null || trace.getType() == HitResult.Type.MISS)

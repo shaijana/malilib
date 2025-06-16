@@ -5,13 +5,21 @@ import org.jetbrains.annotations.ApiStatus;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
 
+import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.util.MathUtils;
 
+/**
+ * Tick Rate / Measurement utility that tracks and calculates the server's Tick Rate over time.
+ */
 public class TickUtils
 {
     private static final Data INSTANCE = new Data();
     public static Data getInstance() { return INSTANCE; }
 
+    /**
+     * Returns the actual Vanilla Tick Rate.
+     * @return ()
+     */
     public static float getTickRate()
     {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -28,6 +36,10 @@ public class TickUtils
         return -1F;
     }
 
+    /**
+     * Get the Vanilla MSPT measurement.
+     * @return ()
+     */
     public static float getMillisPerTick()
     {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -44,6 +56,10 @@ public class TickUtils
         return -1F;
     }
 
+    /**
+     * Return whether Vanilla is currently stepping ticks.
+     * @return ()
+     */
     public static boolean isStepping()
     {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -59,6 +75,11 @@ public class TickUtils
 
         return false;
     }
+
+    /**
+     * Return whether the game is Frozen.
+     * @return ()
+     */
     public static boolean isFrozen()
     {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -74,6 +95,11 @@ public class TickUtils
 
         return false;
     }
+
+    /**
+     * Return whether the game is Sprinting / Tick Warping.
+     * @return ()
+     */
     public static boolean isSprinting()
     {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -93,11 +119,19 @@ public class TickUtils
         return false;
     }
 
-    public static boolean isMeasuredEstimated()
+    /**
+     * Return whether the Tick Data is estimated or actual.
+     * @return ()
+     */
+    public static boolean isEstimated()
     {
         return getInstance().hasTimeSynced();
     }
 
+    /**
+     * Return the measured / calculated MSPT
+     * @return ()
+     */
     public static double getMeasuredMSPT()
     {
         Data timeData = getInstance();
@@ -110,6 +144,10 @@ public class TickUtils
         return 0.0D;
     }
 
+    /**
+     * Return the measured / calculated TPS
+     * @return ()
+     */
     public static double getMeasuredTPS()
     {
         Data timeData = getInstance();
@@ -122,7 +160,10 @@ public class TickUtils
         return 0.0D;
     }
 
-    // The non-scaled version based on tickRate (The raw math version)
+    /**
+     * Return the actual (Non-tick limited) TPS based on the Tick Rate of the server.
+     * @return ()
+     */
     public static double getActualTPS()
     {
         Data timeData = getInstance();
@@ -135,6 +176,11 @@ public class TickUtils
         return 0.0D;
     }
 
+    /**
+     * These are not meant to be used outside of DEBUG MODE, to save on unused CPU math cycles.
+      * @return ()
+     */
+    @ApiStatus.Experimental
     public static double getAvgMSPT()
     {
         Data timeData = getInstance();
@@ -147,6 +193,11 @@ public class TickUtils
         return 0.0D;
     }
 
+    /**
+     * These are not meant to be used outside of DEBUG MODE, to save on unused CPU math cycles.
+     * @return ()
+     */
+    @ApiStatus.Experimental
     public static double getAvgTPS()
     {
         Data timeData = getInstance();
@@ -159,6 +210,9 @@ public class TickUtils
         return 0.0D;
     }
 
+    /**
+     * Internal Data class to store and manage the Tick Information.
+     */
     @ApiStatus.Internal
     public static class Data
     {
@@ -176,6 +230,7 @@ public class TickUtils
         private double avgMeasuredTPS = -1.0D;
         private boolean isValid = false;
         private boolean hasTimeSynced = false;
+        private boolean useDirectServerData = false;
 
         private Data() {}
 
@@ -184,9 +239,25 @@ public class TickUtils
             this.tickRate = tickRate;
         }
 
+        /**
+         * Return whether this data is supposed to be tracking data directly from Carpet or Servux
+         * @return ()
+         */
+        public boolean isUsingDirectServerData() { return this.useDirectServerData; }
+
+        /**
+         * Meant to enable the Carpet / Servux server data mode.
+         * @param toggle ()
+         */
+        public void toggleUseDirectServerData(boolean toggle)
+        {
+            this.useDirectServerData = toggle;
+        }
+
+        @ApiStatus.Internal
         public void updateNanoTick(long timeUpdate)
         {
-            if (!MinecraftClient.getInstance().isIntegratedServerRunning())
+            if (!this.useDirectServerData && !MinecraftClient.getInstance().isIntegratedServerRunning())
             {
                 final long currentTime = System.nanoTime();
 
@@ -199,7 +270,10 @@ public class TickUtils
                         this.measuredMSPT = ((double) (currentTime - this.lastNanoTime) / (double) elapsed) / 1000000D;
                         this.measuredTPS = this.measuredMSPT <= 50 ? this.tickRate : (1000D / this.measuredMSPT);
                         this.actualTPS = (1000D / this.measuredMSPT);
-                        this.calculateAverages();
+                        if (MaLiLibReference.DEBUG_MODE)
+                        {
+                            this.calculateAverages();
+                        }
                         this.isValid = true;
                     }
                 }
@@ -210,7 +284,8 @@ public class TickUtils
             }
         }
 
-        public void updateNanoTickFromServer(MinecraftServer server)
+        @ApiStatus.Internal
+        public void updateNanoTickFromIntegratedServer(MinecraftServer server)
         {
             this.lastNanoTime = System.nanoTime();
 
@@ -219,22 +294,37 @@ public class TickUtils
                 this.measuredMSPT = MathUtils.average(server.getTickTimes()) / 1000000D;
                 this.measuredTPS = this.measuredMSPT <= 50 ? this.tickRate : (1000D / this.measuredMSPT);
                 this.actualTPS = (1000D / this.measuredMSPT);
-                this.calculateAverages();
+                if (MaLiLibReference.DEBUG_MODE)
+                {
+                    this.calculateAverages();
+                }
                 this.isValid = true;
             }
         }
 
-        public void updateTicksFromServerDirect(final double tps, final double mspt)
+        /**
+         * Update the direct-server data from Carpet / Servux into this Tick Data.
+         * @param tps ()
+         * @param mspt ()
+         */
+        public void updateNanoTickFromServerDirect(final double tps, final double mspt)
         {
-            // For things like Carpet / Servux
-            this.lastNanoTime = System.nanoTime();
-            this.measuredMSPT = mspt;
-            this.measuredTPS = tps;
-            this.actualTPS = (1000D / this.measuredMSPT);
-            this.calculateAverages();
-            this.isValid = true;
+            if (this.useDirectServerData)
+            {
+                // For things like Carpet / Servux
+                this.lastNanoTime = System.nanoTime();
+                this.measuredMSPT = mspt;
+                this.measuredTPS = tps;
+                this.actualTPS = (1000D / this.measuredMSPT);
+                if (MaLiLibReference.DEBUG_MODE)
+                {
+                    this.calculateAverages();
+                }
+                this.isValid = true;
+            }
         }
 
+        @ApiStatus.Internal
         private void calculateAverages()
         {
             if (this.lastMeasurementTick >= MAX_HISTORY)
@@ -249,20 +339,46 @@ public class TickUtils
             this.lastMeasurementTick++;
         }
 
+        /**
+         * Return if the data has been updated, and is valid.
+         * @return ()
+         */
         public boolean isValid() { return this.isValid; }
 
+        /**
+         * Return if this data has been timed synced and estimated.
+         * @return ()
+         */
         public boolean hasTimeSynced() { return this.hasTimeSynced; }
 
+        /**
+         * Return the Vanilla Tick Rate.
+         * @return ()
+         */
         public double getTickRate() { return this.tickRate; }
 
+        /**
+         * Return the Measured TPS that has been calculated.
+         * @return ()
+         */
         public double getMeasuredTPS() { return this.measuredTPS; }
 
+        /**
+         * Return the Measured MSPT that has been calculated.
+         * @return ()
+         */
         public double getMeasuredMSPT() { return this.measuredMSPT; }
 
+        /**
+         * Return the Actual TPS that has been calculated (Non TickRate-adjusted) via flat math between update packets.
+         * @return ()
+         */
         public double getActualTPS() { return this.actualTPS; }
 
+        @ApiStatus.Internal
         public double getAverageMSPT() { return this.avgMeasuredMSPT; }
 
+        @ApiStatus.Internal
         public double getAverageTPS() { return this.avgMeasuredTPS; }
     }
 }
