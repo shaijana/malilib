@@ -393,18 +393,15 @@ public class TestRenderHandler implements IRenderer
 
                     if (inv != null)
                     {
-                        NbtInventory nbtInv = NbtInventory.fromInventory(inv);
-
-                        if (nbtInv.isEmpty())
+                        try (NbtInventory nbtInv = NbtInventory.fromInventory(inv))
                         {
-                            return;
+                            NbtList list = nbtInv.toNbtList(world.getRegistryManager());
+                            NbtCompound nbt = new NbtCompound();
+
+                            nbt.put(NbtKeys.ENDER_ITEMS, list);
+                            RenderUtils.renderNbtItemsPreview(drawContext, stack, nbt, x, y, false);
                         }
-
-                        NbtCompound nbt = new NbtCompound();
-                        NbtList list = nbtInv.toNbtList();
-
-                        nbt.put(NbtKeys.ENDER_ITEMS, list);
-                        RenderUtils.renderNbtItemsPreview(drawContext, stack, nbt, x, y, false);
+                        catch (Exception ignored) { }
                     }
                 }
             }

@@ -260,7 +260,7 @@ public class NbtInventory implements AutoCloseable
      * @return ()
      * @throws RuntimeException ()
      */
-    public NbtElement toNbtSingle() throws RuntimeException
+    public NbtElement toNbtSingle(@Nonnull DynamicRegistryManager registry) throws RuntimeException
     {
         if (this.size() > 1)
         {
@@ -271,7 +271,7 @@ public class NbtInventory implements AutoCloseable
 
         if (!slot.stack().isEmpty())
         {
-            NbtElement element = StackWithSlot.CODEC.encodeStart(NbtOps.INSTANCE, slot).getPartialOrThrow();
+            NbtElement element = StackWithSlot.CODEC.encodeStart(registry.getOps(NbtOps.INSTANCE), slot).getPartialOrThrow();
 //            LOGGER.info("toNbtSingle(): --> nbt: [{}]", element.toString());
             return element;
         }
@@ -284,7 +284,7 @@ public class NbtInventory implements AutoCloseable
      * @return ()
      * @throws RuntimeException ()
      */
-    public NbtList toNbtList() throws RuntimeException
+    public NbtList toNbtList(@Nonnull DynamicRegistryManager registry) throws RuntimeException
     {
         NbtList nbt = new NbtList();
 
@@ -298,7 +298,7 @@ public class NbtInventory implements AutoCloseable
                 {
                     if (!slot.stack().isEmpty())
                     {
-                        NbtElement element = StackWithSlot.CODEC.encodeStart(NbtOps.INSTANCE, slot).getPartialOrThrow();
+                        NbtElement element = StackWithSlot.CODEC.encodeStart(registry.getOps(NbtOps.INSTANCE), slot).getPartialOrThrow();
 //                        LOGGER.info("toNbtList(): slot [{}] --> nbt: [{}]", slot.slot(), element.toString());
                         nbt.add(element);
                     }
@@ -315,13 +315,13 @@ public class NbtInventory implements AutoCloseable
      * @return ()
      * @throws RuntimeException ()
      */
-    public NbtCompound toNbt(NbtType<?> type, String key) throws RuntimeException
+    public NbtCompound toNbt(NbtType<?> type, String key, @Nonnull DynamicRegistryManager registry) throws RuntimeException
     {
         NbtCompound nbt = new NbtCompound();
 
         if (type == NbtList.TYPE)
         {
-            NbtList list = this.toNbtList();
+            NbtList list = this.toNbtList(registry);
 
             if (list.isEmpty())
             {
@@ -334,7 +334,7 @@ public class NbtInventory implements AutoCloseable
         }
         else if (type == NbtCompound.TYPE)
         {
-            nbt.put(key, this.toNbtSingle());
+            nbt.put(key, this.toNbtSingle(registry));
 
             return nbt;
         }
@@ -350,7 +350,7 @@ public class NbtInventory implements AutoCloseable
      * @return ()
      * @throws RuntimeException ()
      */
-    public static @Nullable NbtInventory fromNbt(@Nonnull NbtCompound nbtIn, String key, boolean noSlotId) throws RuntimeException
+    public static @Nullable NbtInventory fromNbt(@Nonnull NbtCompound nbtIn, String key, boolean noSlotId, @Nonnull DynamicRegistryManager registry) throws RuntimeException
     {
         if (nbtIn.isEmpty() || !nbtIn.contains(key))
         {
@@ -359,11 +359,11 @@ public class NbtInventory implements AutoCloseable
 
         if (Objects.requireNonNull(nbtIn.get(key)).getNbtType() == NbtList.TYPE)
         {
-            return fromNbtList(nbtIn.getListOrEmpty(key), noSlotId);
+            return fromNbtList(nbtIn.getListOrEmpty(key), noSlotId, registry);
         }
         else if (Objects.requireNonNull(nbtIn.get(key)).getNbtType() == NbtCompound.TYPE)
         {
-            return fromNbtSingle(nbtIn.getCompoundOrEmpty(key));
+            return fromNbtSingle(nbtIn.getCompoundOrEmpty(key), registry);
         }
         else
         {
@@ -377,7 +377,7 @@ public class NbtInventory implements AutoCloseable
      * @return ()
      * @throws RuntimeException ()
      */
-    public static @Nullable NbtInventory fromNbtSingle(@Nonnull NbtCompound nbt) throws RuntimeException
+    public static @Nullable NbtInventory fromNbtSingle(@Nonnull NbtCompound nbt, @Nonnull DynamicRegistryManager registry) throws RuntimeException
     {
         if (nbt.isEmpty())
         {
@@ -387,7 +387,7 @@ public class NbtInventory implements AutoCloseable
         NbtInventory newInv = new NbtInventory();
 
         newInv.items = new HashSet<>();
-        StackWithSlot slot = StackWithSlot.CODEC.parse(NbtOps.INSTANCE, nbt).getPartialOrThrow();
+        StackWithSlot slot = StackWithSlot.CODEC.parse(registry.getOps(NbtOps.INSTANCE), nbt).getPartialOrThrow();
         //LOGGER.info("fromNbtSingle(): slot [{}], stack: [{}]", slot.slot(), slot.stack().toString());
         newInv.items.add(slot);
 
@@ -401,7 +401,7 @@ public class NbtInventory implements AutoCloseable
      * @return ()
      * @throws RuntimeException ()
      */
-    public static @Nullable NbtInventory fromNbtList(@Nonnull NbtList list, boolean noSlotId) throws RuntimeException
+    public static @Nullable NbtInventory fromNbtList(@Nonnull NbtList list, boolean noSlotId, @Nonnull DynamicRegistryManager registry) throws RuntimeException
     {
         if (list.isEmpty())
         {
@@ -426,11 +426,11 @@ public class NbtInventory implements AutoCloseable
             // Some lists, such as the "Inventory" tag does not include slot ID's
             if (noSlotId)
             {
-                slot = new StackWithSlot(i, ItemStack.CODEC.parse(NbtOps.INSTANCE, list.get(i)).getPartialOrThrow());
+                slot = new StackWithSlot(i, ItemStack.CODEC.parse(registry.getOps(NbtOps.INSTANCE), list.get(i)).getPartialOrThrow());
             }
             else
             {
-                slot = StackWithSlot.CODEC.parse(NbtOps.INSTANCE, list.get(i)).getPartialOrThrow();
+                slot = StackWithSlot.CODEC.parse(registry.getOps(NbtOps.INSTANCE), list.get(i)).getPartialOrThrow();
             }
 
 //            LOGGER.info("fromNbtList(): [{}]: slot [{}], stack: [{}]", i, slot.slot(), slot.stack().toString());

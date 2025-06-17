@@ -416,7 +416,7 @@ public class InventoryUtils
     {
         if (stack.isEmpty() == false)
         {
-            NbtCompound nbt = (NbtCompound) ItemStack.CODEC.encodeStart(NbtOps.INSTANCE, stack).getOrThrow();
+            NbtCompound nbt = (NbtCompound) ItemStack.CODEC.encodeStart(registry.getOps(NbtOps.INSTANCE), stack).getOrThrow();
 
             if (hasNbtItems(nbt))
             {
@@ -491,7 +491,7 @@ public class InventoryUtils
      * @param registry  the Dynamic Registry object
      * @return
      */
-    public static DefaultedList<ItemStack> getNbtItems(@Nonnull NbtCompound nbt, int slotCount, @Nonnull RegistryWrapper.WrapperLookup registry)
+    public static DefaultedList<ItemStack> getNbtItems(@Nonnull NbtCompound nbt, int slotCount, @Nonnull DynamicRegistryManager registry)
     {
         if (slotCount > NbtInventory.MAX_SIZE)
         {
@@ -511,7 +511,7 @@ public class InventoryUtils
 //            DefaultedList<ItemStack> items = DefaultedList.ofSize(slotCount, ItemStack.EMPTY);
 //            Inventories.readData(nbt, items, registry);
 
-            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false);
+            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false, registry);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
@@ -543,7 +543,7 @@ public class InventoryUtils
 //                }
 //            }
 
-            NbtInventory nbtInv = NbtInventory.fromNbtList(list, true);
+            NbtInventory nbtInv = NbtInventory.fromNbtList(list, true, registry);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
@@ -575,7 +575,7 @@ public class InventoryUtils
 //                }
 //            }
 
-            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false);
+            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false, registry);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
@@ -650,7 +650,7 @@ public class InventoryUtils
      * @param registry  The Dynamic Registry object
      * @return
      */
-    public static Inventory getNbtInventory(@Nonnull NbtCompound nbt, int slotCount, @Nonnull RegistryWrapper.WrapperLookup registry)
+    public static Inventory getNbtInventory(@Nonnull NbtCompound nbt, int slotCount, @Nonnull DynamicRegistryManager registry)
     {
         if (slotCount > NbtInventory.MAX_SIZE)
         {
@@ -681,7 +681,7 @@ public class InventoryUtils
 //                inv.setStack(i, items.get(i).copy());
 //            }
 
-            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS, false);
+            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS, false, registry);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
@@ -708,7 +708,7 @@ public class InventoryUtils
 //            }
 
             // "Inventory" tags do not include Slot ID's
-            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.INVENTORY, true);
+            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.INVENTORY, true, registry);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
@@ -727,7 +727,7 @@ public class InventoryUtils
                 slotCount = list.size();
             }
 
-            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false);
+            NbtInventory nbtInv = NbtInventory.fromNbtList(list, false, registry);
 
             if (nbtInv == null || nbtInv.isEmpty())
             {
@@ -807,7 +807,7 @@ public class InventoryUtils
 //            Inventories.readNbt(nbt, items, registry);
             inv.setStack(0, horseEquipment.getLast());
 
-            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS, false);
+            NbtInventory nbtInv = NbtInventory.fromNbt(nbt, NbtKeys.ITEMS, false, registry);
 
             // Chested Horse
             if (nbtInv != null && !nbtInv.isEmpty())
