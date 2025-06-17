@@ -151,7 +151,7 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
         Entity cameraEntity = EntityUtils.getCameraEntity();
         this.context = null;
 
-        if (mc.player == null || world == null)
+        if (mc.player == null || world == null || mc.world == null)
         {
             return null;
         }
@@ -251,7 +251,7 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
             if (world instanceof ServerWorld)
             {
                 NbtView view = NbtView.getWriter(world.getRegistryManager());
-//                entity = sw.getEntityById(entity.getId());
+                entity = world.getEntityById(entity.getId());
 
                 if (entity != null && entity.saveSelfData(view.getWriter()))
                 {
