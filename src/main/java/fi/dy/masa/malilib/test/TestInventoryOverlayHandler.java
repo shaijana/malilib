@@ -174,8 +174,17 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
         }
 
 //        HitResult trace = TestRayTraceUtils.getRayTraceFromEntity(world, cameraEntity, false);
-        HitResult trace = RayTraceUtils.getRayTraceFromEntity(world, cameraEntity, RaycastContext.FluidHandling.NONE);
-//        HitResult trace = mc.crosshairTarget;
+        HitResult trace;
+
+        if (cameraEntity != mc.player)
+        {
+            trace = RayTraceUtils.getRayTraceFromEntity(mc.world, cameraEntity, RaycastContext.FluidHandling.NONE);
+        }
+        else
+        {
+            trace = mc.crosshairTarget;
+        }
+
         NbtCompound nbt = new NbtCompound();
 
         if (trace == null || trace.getType() == HitResult.Type.MISS)
@@ -232,11 +241,19 @@ public class TestInventoryOverlayHandler implements IInventoryOverlayHandler
         {
             Entity entity = ((EntityHitResult) trace).getEntity();
 
+            if (mc.targetedEntity != null && entity.getId() != mc.targetedEntity.getId())
+            {
+                MaLiLib.LOGGER.error("getTargetInventory(): entityId Not Equal: [{} != {}]", entity.getId(), mc.targetedEntity.getId());
+            }
+
+            MaLiLib.LOGGER.warn("getTargetInventory(): entityUUID [{}] vs targetedUUID [{}]", entity.getUuidAsString(), mc.targetedEntity != null ? mc.targetedEntity.getUuidAsString() : "<NULL>");
+
             if (world instanceof ServerWorld)
             {
                 NbtView view = NbtView.getWriter(world.getRegistryManager());
+//                entity = sw.getEntityById(entity.getId());
 
-                if (entity.saveSelfData(view.getWriter()))
+                if (entity != null && entity.saveSelfData(view.getWriter()))
                 {
                     return this.getTargetInventoryFromEntity(world.getEntityById(entity.getId()), view.readNbt());
                 }
