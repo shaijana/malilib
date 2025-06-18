@@ -178,9 +178,9 @@ public class RenderUtils
 
     /**
      * Attempts to bind the Shader Texture
-     * @param texture
-     * @param textureId
-     * @return
+     * @param texture ()
+     * @param textureId ()
+     * @return ()
      */
     public static ResourceTexture bindShaderTexture(Identifier texture, int textureId) throws RuntimeException
     {
@@ -199,8 +199,8 @@ public class RenderUtils
     /**
      * Attempt a simple binding of a GpuTexture, returns null if failed to loadContents.
      *
-     * @param texture
-     * @return
+     * @param texture ()
+     * @return ()
      */
     public static @Nullable GpuTexture bindGpuTexture(Identifier texture)
     {
@@ -217,8 +217,8 @@ public class RenderUtils
     /**
      * Attempt a simple binding of a GpuTextureView, returns null if failed to loadContents.
      *
-     * @param texture
-     * @return
+     * @param texture ()
+     * @return ()
      */
     public static @Nullable GpuTextureView bindGpuTextureView(Identifier texture)
     {
@@ -237,9 +237,8 @@ public class RenderUtils
      * Add a 'Simple' Element to the DrawContext.
      * Don't forget to manage the Layers / Checkpoints.
      *
-     * @param drawContext
-     * @param type
-     * @param simpleElement
+     * @param drawContext ()
+     * @param simpleElement ()
      */
     public static void addSimpleElement(DrawContext drawContext, SimpleGuiElementRenderState simpleElement)
     {
@@ -250,8 +249,8 @@ public class RenderUtils
      * Add a 'Special' Element to the DrawContext
      * Don't forget to manage the Layers / Checkpoints.
      *
-     * @param drawContext
-     * @param specialElement
+     * @param drawContext ()
+     * @param specialElement ()
      */
     public static void addSpecialElement(DrawContext drawContext, SpecialGuiElementRenderState specialElement)
     {
@@ -280,12 +279,12 @@ public class RenderUtils
         // Debug Built Map
         if (MaLiLibReference.DEBUG_MODE)
         {
-            dumpBuilerMap(((IMixinGuiRenderer) guiRenderer).malilib_getSpecialGuiRenderers());
+            dumpBuilderMap(((IMixinGuiRenderer) guiRenderer).malilib_getSpecialGuiRenderers());
         }
     }
 */
 
-    private static void dumpBuilerMap(Map<Class<? extends SpecialGuiElementRenderState>, SpecialGuiElementRenderer<?>> entries)
+    private static void dumpBuilderMap(Map<Class<? extends SpecialGuiElementRenderState>, SpecialGuiElementRenderer<?>> entries)
     {
         System.out.print("DUMP SpecialGuiRenderers()\n");
 
@@ -310,8 +309,8 @@ public class RenderUtils
      * Add a 'Item' Element to the DrawContext
      * Don't forget to manage the Layers / Checkpoints.
      *
-     * @param drawContext
-     * @param itemElement
+     * @param drawContext ()
+     * @param itemElement ()
      */
     public static void addItemElement(DrawContext drawContext, ItemGuiElementRenderState itemElement)
     {
@@ -322,8 +321,8 @@ public class RenderUtils
      * Add a 'Text' Element to the DrawContext.
      * Don't forget to manage the Layers / Checkpoints.
      *
-     * @param drawContext
-     * @param textElement
+     * @param drawContext ()
+     * @param textElement ()
      */
     public static void addTextElement(DrawContext drawContext, TextGuiElementRenderState textElement)
     {
@@ -332,8 +331,8 @@ public class RenderUtils
 
     /**
      * Pushes the Scissor Stack using rect
-     * @param drawContext
-     * @param rect
+     * @param drawContext ()
+     * @param rect ()
      */
     public static void pushScissor(DrawContext drawContext, @Nonnull ScreenRect rect)
     {
@@ -342,10 +341,10 @@ public class RenderUtils
 
     /**
      * Returns if the Scissor Stack contains the position x, y
-     * @param drawContext
-     * @param x
-     * @param y
-     * @return
+     * @param drawContext ()
+     * @param x ()
+     * @param y ()
+     * @return ()
      */
     public static boolean containsScissor(DrawContext drawContext, int x, int y)
     {
@@ -354,8 +353,8 @@ public class RenderUtils
 
     /**
      * Peeks the Scissor Stack's Screen Rect
-     * @param drawContext
-     * @return
+     * @param drawContext ()
+     * @return ()
      */
     public static ScreenRect peekLastScissor(DrawContext drawContext)
     {
@@ -364,8 +363,8 @@ public class RenderUtils
 
     /**
      * Pop's the Scissor Stack's Screen Rect
-     * @param drawContext
-     * @return
+     * @param drawContext ()
+     * @return ()
      */
     public static ScreenRect popScissor(DrawContext drawContext)
     {

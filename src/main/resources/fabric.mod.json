@@ -35,11 +35,11 @@
 	],
 	"accessWidener": "malilib.accesswidener",
 	"depends": {
-		"minecraft": ">=1.21.6-rc.1 <1.21.7",
+		"minecraft": ">=1.21.6 <1.21.7",
 		"fabric-networking-api-v1": ">=5.0.0",
 		"fabric-resource-loader-v0": "*"
 	},
 	"breaks": {
-		"iris": "<1.8.11-"
+		"iris": "<1.9.0-"
 	}
 }
