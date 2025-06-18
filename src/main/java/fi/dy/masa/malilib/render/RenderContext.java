@@ -58,6 +58,7 @@ public class RenderContext implements AutoCloseable
     private float lineWidth;
     private int color;
     private boolean started;
+    private boolean uploaded;
     private int indexCount;
 
     public RenderContext(Supplier<String> name, RenderPipeline shader)
@@ -81,6 +82,7 @@ public class RenderContext implements AutoCloseable
         this.color = -1;
         this.lineWidth = 1.0f;
         this.started = true;
+        this.uploaded = false;
     }
 
     public BufferBuilder start(Supplier<String> name, RenderPipeline shader)
@@ -105,8 +107,13 @@ public class RenderContext implements AutoCloseable
         this.color = -1;
         this.lineWidth = 1.0f;
         this.started = true;
+        this.uploaded = false;
         return this.builder;
     }
+
+    public boolean isStarted() { return this.started; }
+
+    public boolean isUploaded() { return this.uploaded; }
 
     public String getName()
     {
@@ -318,6 +325,7 @@ public class RenderContext implements AutoCloseable
 
             this.indexCount = meshData.getDrawParameters().indexCount();
             this.indexType = meshData.getDrawParameters().indexType();
+            this.uploaded = true;
 //            meshData.close();
         }
     }
@@ -775,8 +783,8 @@ public class RenderContext implements AutoCloseable
             // Attach Frame buffers
             try (RenderPass pass = device.createCommandEncoder()
                     .createRenderPass(this.name,
-                            texture1, OptionalInt.empty(),
-                            texture2, OptionalDouble.empty())
+                                      texture1, OptionalInt.empty(),
+                                      texture2, OptionalDouble.empty())
             )
             {
 //                MaLiLib.LOGGER.warn("RenderContext#drawInternal() [{}] renderPass --> setPipeline() [{}] // isDevelopment [{}]", this.name.get(), this.shader.getLocation().toString(), RenderPassImpl.IS_DEVELOPMENT);
@@ -972,6 +980,7 @@ public class RenderContext implements AutoCloseable
         this.color = -1;
         this.lineWidth = 1.0f;
         this.started = false;
+        this.uploaded = false;
     }
 
     @Override
@@ -982,6 +991,12 @@ public class RenderContext implements AutoCloseable
             this.unbindTexture(this.texture.getId());
             this.texture.close();
             this.texture = null;
+        }
+
+        if (this.directTexture != null)
+        {
+            this.directTexture.close();
+            this.directTexture = null;
         }
 
         this.reset();
