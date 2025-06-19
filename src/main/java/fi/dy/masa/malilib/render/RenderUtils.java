@@ -1681,34 +1681,34 @@ public class RenderUtils
             }
 
             addSimpleElement(drawContext,
-                             new MaLiLibLightTexturedGuiElement(RenderPipelines.GUI_TEXTURED,
-                                     TextureSetup.withoutGlTexture(gpuTextureView),
-                                     new Matrix3x2f(drawContext.getMatrices()),
-                                     x1, y1, x2, y2,
-                                     0.0f, 1.0f, 0.0f, 1.0f,
-                                     -1, uv,
-                                     peekLastScissor(drawContext))
+                    new MaLiLibLightTexturedGuiElement(
+                            RenderPipelines.GUI_TEXTURED,
+                            TextureSetup.withoutGlTexture(gpuTextureView),
+                            new Matrix3x2f(drawContext.getMatrices()),
+                            x1, y1, x2, y2,
+                            0.0f, 1.0f, 0.0f, 1.0f,
+                            -1, uv,
+                            peekLastScissor(drawContext))
             );
 
-            if (mapState != null)
+            if (mapId != null && mapState != null)
             {
                 x1 += 8;
                 y1 += 8;
-                z = 310;
+//                z = 310;
 
-                drawContext.enableScissor(x1, y1, x1 + z, y1 + z);
+//                drawContext.enableScissor(x1, y1, x1 + z, y1 + z);
                 double scale = (double) (dimensions - 16) / 128.0D;
 
-                Matrix3x2fStack matrixStack = drawContext.getMatrices();
-                matrixStack.pushMatrix();
-                matrixStack.translate(x1, y1);
-                matrixStack.scale((float) scale, (float) scale);
+                drawContext.getMatrices().pushMatrix();
+                drawContext.getMatrices().translate(x1, y1);
+                drawContext.getMatrices().scale((float) scale, (float) scale);
 
                 MapRenderState mapRenderState = new MapRenderState();
                 mc().getMapRenderer().update(mapId, mapState, mapRenderState);
                 drawContext.drawMap(mapRenderState);
-                matrixStack.popMatrix();
-                drawContext.disableScissor();
+                drawContext.getMatrices().popMatrix();
+//                drawContext.disableScissor();
             }
         }
     }
