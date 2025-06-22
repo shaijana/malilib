@@ -321,9 +321,10 @@ public class TickUtils
                     if (elapsed > 0)
                     {
                         // Check if Remote Server Direct Data is stale, and
-                        // disable (Such as if you disable the TPS logger in Carpet)
-                        if (this.useDirectServerData &&
-                            (currentTime - this.lastDirectTick) > (elapsed * 2))
+                        // disable (Such as if you disable the TPS logger in Carpet),
+                        // give it 500ms (10GT) before shutting it off.
+                        if (this.useDirectServerData && this.lastDirectTick > -1L &&
+                            (currentTime - this.lastDirectTick) > 500000000L)
                         {
                             this.toggleUseDirectServerData(false);
                             this.directTPS = -1.0D;
