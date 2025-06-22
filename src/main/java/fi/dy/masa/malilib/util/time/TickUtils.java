@@ -138,6 +138,15 @@ public class TickUtils
     }
 
     /**
+     * Return whether the Tick Data has direct server data.
+     * @return ()
+     */
+    public static boolean hasDirectData()
+    {
+        return getInstance().hasDirectData();
+    }
+
+    /**
      * Return the measured / calculated MSPT
      * @return ()
      */
@@ -164,6 +173,38 @@ public class TickUtils
         if (timeData.isValid())
         {
             return timeData.getMeasuredTPS();
+        }
+
+        return 0.0D;
+    }
+
+    /**
+     * Return the direct remote server MSPT
+     * @return ()
+     */
+    public static double getDirectMSPT()
+    {
+        Data timeData = getInstance();
+
+        if (timeData.hasDirectData())
+        {
+            return timeData.getDirectMSPT();
+        }
+
+        return 0.0D;
+    }
+
+    /**
+     * Return the direct remote server TPS
+     * @return ()
+     */
+    public static double getDirectTPS()
+    {
+        Data timeData = getInstance();
+
+        if (timeData.hasDirectData())
+        {
+            return timeData.getDirectTPS();
         }
 
         return 0.0D;
@@ -228,6 +269,8 @@ public class TickUtils
         private double tickRate = TickUtils.getTickRate();
         private double measuredTPS = -1.0D;
         private double measuredMSPT = -1.0D;
+        private double directTPS = -1.0D;
+        private double directMSPT = -1.0D;
         private double actualTPS = -1.0D;
         private long lastNanoTick = -1L;
         private long lastNanoTime = -1L;
@@ -266,7 +309,7 @@ public class TickUtils
         @ApiStatus.Internal
         public void updateNanoTick(long timeUpdate)
         {
-            if (!this.useDirectServerData && !MinecraftClient.getInstance().isIntegratedServerRunning())
+            if (!MinecraftClient.getInstance().isIntegratedServerRunning())
             {
                 final long currentTime = System.nanoTime();
 
@@ -321,10 +364,8 @@ public class TickUtils
             if (this.useDirectServerData)
             {
                 // For things like Carpet / Servux
-                this.lastNanoTime = System.nanoTime();
-                this.measuredMSPT = mspt;
-                this.measuredTPS = tps;
-                this.actualTPS = (1000D / this.measuredMSPT);
+                this.directMSPT = mspt;
+                this.directTPS = tps;
                 if (MaLiLibReference.DEBUG_MODE)
                 {
                     this.calculateAverages();
@@ -361,6 +402,12 @@ public class TickUtils
         public boolean hasTimeSynced() { return this.hasTimeSynced; }
 
         /**
+         * Return if this data has been timed synced from a remote server.
+         * @return ()
+         */
+        public boolean hasDirectData() { return this.useDirectServerData; }
+
+        /**
          * Return the Vanilla Tick Rate.
          * @return ()
          */
@@ -377,6 +424,18 @@ public class TickUtils
          * @return ()
          */
         public double getMeasuredMSPT() { return this.measuredMSPT; }
+
+        /**
+         * Return the Direct TPS that has been synced from a remote server.
+         * @return ()
+         */
+        public double getDirectTPS() { return this.directTPS; }
+
+        /**
+         * Return the Direct MSPT that has been synced from a remote server.
+         * @return ()
+         */
+        public double getDirectMSPT() { return this.directMSPT; }
 
         /**
          * Return the Actual TPS that has been calculated (Non TickRate-adjusted) via flat math between update packets.
