@@ -272,6 +272,7 @@ public class TickUtils
         private double directTPS = -1.0D;
         private double directMSPT = -1.0D;
         private double actualTPS = -1.0D;
+        private long lastDirectTick = -1L;
         private long lastNanoTick = -1L;
         private long lastNanoTime = -1L;
         private final int MAX_HISTORY = 30;
@@ -319,6 +320,17 @@ public class TickUtils
 
                     if (elapsed > 0)
                     {
+                        // Check if Remote Server Direct Data is stale, and
+                        // disable (Such as if you disable the TPS logger in Carpet)
+                        if (this.useDirectServerData &&
+                            (currentTime - this.lastDirectTick) > (elapsed * 2))
+                        {
+                            this.toggleUseDirectServerData(false);
+                            this.directTPS = -1.0D;
+                            this.directMSPT = -1.0D;
+                            this.lastDirectTick = -1L;
+                        }
+
                         this.measuredMSPT = ((double) (currentTime - this.lastNanoTime) / (double) elapsed) / 1000000D;
                         this.measuredTPS = this.measuredMSPT <= 50 ? this.tickRate : (1000D / this.measuredMSPT);
                         this.actualTPS = (1000D / this.measuredMSPT);
@@ -366,6 +378,7 @@ public class TickUtils
                 // For things like Carpet / Servux
                 this.directMSPT = mspt;
                 this.directTPS = tps;
+                this.lastDirectTick = System.nanoTime();
                 if (MaLiLibReference.DEBUG_MODE)
                 {
                     this.calculateAverages();
