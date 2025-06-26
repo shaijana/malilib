@@ -6,6 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
 
 import fi.dy.masa.malilib.MaLiLibReference;
+import fi.dy.masa.malilib.mixin.server.IMixinServerTickManager;
 import fi.dy.masa.malilib.util.MathUtils;
 
 /**
@@ -57,6 +58,26 @@ public class TickUtils
     }
 
     /**
+     * Return the Vanilla Sprint Ticks, if available.
+     * @return ()
+     */
+    public static long getSprintTicks()
+    {
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        if (mc.isIntegratedServerRunning() && mc.getServer() != null)
+        {
+            return ((IMixinServerTickManager) mc.getServer().getTickManager()).malilib_getSprintTicks();
+        }
+        else if (getInstance().hasServuxData())
+        {
+            return getInstance().getSprintTicks();
+        }
+
+        return -1L;
+    }
+
+    /**
      * Return whether Vanilla is currently stepping ticks.
      * @return ()
      */
@@ -67,6 +88,10 @@ public class TickUtils
         if (mc.isIntegratedServerRunning() && mc.getServer() != null)
         {
             return mc.getServer().getTickManager().isStepping();
+        }
+        else if (getInstance().hasServuxData())
+        {
+            return getInstance().isStepping();
         }
         else if (mc.world != null)
         {
@@ -88,6 +113,10 @@ public class TickUtils
         {
             return mc.getServer().getTickManager().isFrozen();
         }
+        else if (getInstance().hasServuxData())
+        {
+            return getInstance().isFrozen();
+        }
         else if (mc.world != null)
         {
             return mc.world.getTickManager().isFrozen();
@@ -107,6 +136,10 @@ public class TickUtils
         if (mc.isIntegratedServerRunning() && mc.getServer() != null)
         {
             return mc.getServer().getTickManager().isSprinting();
+        }
+        else if (getInstance().hasServuxData())
+        {
+            return getInstance().isSprinting();
         }
         else if (mc.world != null)
         {
@@ -144,6 +177,15 @@ public class TickUtils
     public static boolean hasDirectData()
     {
         return getInstance().hasDirectData();
+    }
+
+    /**
+     * Return whether the Tick Data has Servux server data.
+     * @return ()
+     */
+    public static boolean hasServuxData()
+    {
+        return getInstance().hasServuxData();
     }
 
     /**
@@ -263,7 +305,6 @@ public class TickUtils
     /**
      * Internal Data class to store and manage the Tick Information.
      */
-    @ApiStatus.Internal
     public static class Data
     {
         private double tickRate = TickUtils.getTickRate();
@@ -284,6 +325,11 @@ public class TickUtils
         private boolean isValid = false;
         private boolean hasTimeSynced = false;
         private boolean useDirectServerData = false;
+        private boolean hasServuxData = false;
+        private long sprintTicks = -1L;
+        private boolean isFrozen;
+        private boolean isSprinting;
+        private boolean isStepping;
 
         private Data() {}
 
@@ -330,6 +376,11 @@ public class TickUtils
                             this.directTPS = -1.0D;
                             this.directMSPT = -1.0D;
                             this.lastDirectTick = -1L;
+                            this.sprintTicks = -1L;
+                            this.isSprinting = false;
+                            this.isFrozen = false;
+                            this.isStepping = false;
+                            this.hasServuxData = false;
                         }
 
                         this.measuredMSPT = ((double) (currentTime - this.lastNanoTime) / (double) elapsed) / 1000000D;
@@ -368,15 +419,15 @@ public class TickUtils
         }
 
         /**
-         * Update the direct-server data from Carpet / Servux into this Tick Data.
+         * Update the direct-server data from Carpet into this Tick Data.
          * @param tps ()
          * @param mspt ()
          */
         public void updateNanoTickFromServerDirect(final double tps, final double mspt)
         {
-            if (this.useDirectServerData)
+            if (this.useDirectServerData && !this.hasServuxData)
             {
-                // For things like Carpet / Servux
+                // For things like Carpet
                 this.directMSPT = mspt;
                 this.directTPS = tps;
                 this.lastDirectTick = System.nanoTime();
@@ -384,6 +435,41 @@ public class TickUtils
                 {
                     this.calculateAverages();
                 }
+                this.isValid = true;
+            }
+        }
+
+        /**
+         * Update the direct-server data from Servux into this Tick Data.
+         * @param tps ()
+         * @param mspt ()
+         * @param sprintTicks ()
+         * @param frozen ()
+         * @param sprinting ()
+         * @param stepping ()
+         */
+        public void updateNanoTickFromServux(final double tps,
+                                             final double mspt,
+                                             final long sprintTicks,
+                                             boolean frozen,
+                                             boolean sprinting,
+                                             boolean stepping)
+        {
+            if (this.useDirectServerData)
+            {
+                // For Servux
+                this.directMSPT = MathUtils.round(mspt, 2);
+                this.directTPS = MathUtils.round(tps, 2);
+                this.lastDirectTick = System.nanoTime();
+                this.sprintTicks = sprintTicks;
+                this.isFrozen = frozen;
+                this.isSprinting = sprinting;
+                this.isStepping = stepping;
+                if (MaLiLibReference.DEBUG_MODE)
+                {
+                    this.calculateAverages();
+                }
+                this.hasServuxData = true;
                 this.isValid = true;
             }
         }
@@ -422,10 +508,40 @@ public class TickUtils
         public boolean hasDirectData() { return this.useDirectServerData; }
 
         /**
+         * Return if this data has been timed synced from a Servux server.
+         * @return ()
+         */
+        public boolean hasServuxData() { return this.hasServuxData; }
+
+        /**
          * Return the Vanilla Tick Rate.
          * @return ()
          */
         public double getTickRate() { return this.tickRate; }
+
+        /**
+         * Return the Servux sprintTicks.
+         * @return ()
+         */
+        public long getSprintTicks() { return this.sprintTicks; }
+
+        /**
+         * Return the Servux Frozen status.
+         * @return ()
+         */
+        public boolean isFrozen() { return this.isFrozen; }
+
+        /**
+         * Return the Servux Sprinting status.
+         * @return ()
+         */
+        public boolean isSprinting() { return this.isSprinting; }
+
+        /**
+         * Return the Servux Stepping status.
+         * @return ()
+         */
+        public boolean isStepping() { return this.isStepping; }
 
         /**
          * Return the Measured TPS that has been calculated.
