@@ -17,16 +17,13 @@ import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.LocalRandom;
 import net.minecraft.world.World;
 
 import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.render.MaLiLibPipelines;
-import fi.dy.masa.malilib.render.RenderContext;
 import fi.dy.masa.malilib.render.RenderUtils;
-import fi.dy.masa.malilib.util.position.PositionUtils;
 
 /**
  * DISABLED -- DOES NOT WORK, DO NOT USE
@@ -55,19 +52,23 @@ public class MaLiLibBlockModelGuiElementRenderer extends SpecialGuiElementRender
         if (state.state().getRenderType() == BlockRenderType.MODEL)
         {
             BlockStateModel model = this.blockRenderManager.getModel(state.state());
-//            BlockRenderLayer layer = RenderLayers.getBlockLayer(state.state());
+            BlockRenderLayer layer = RenderLayers.getBlockLayer(state.state());
 
-            for (BlockRenderLayer layer : BlockRenderLayer.values())
-            {
-                RenderPipeline pipeline = this.swapPipeline(layer);
-                RenderContext ctx = new RenderContext(() -> "malilib:gui_block_state_model/"+layer.getName(), pipeline);
-                BufferBuilder builder = ctx.getBuilder();
+//            for (BlockRenderLayer layer : BlockRenderLayer.values())
+//            {
+//                RenderPipeline pipeline = this.swapPipeline(layer);
+//                RenderContext ctx = new RenderContext(() -> "malilib:gui_block_state_model/"+layer.getName(), pipeline);
+//                BufferBuilder builder = ctx.getBuilder();
+
+                RenderLayer renderLayer = layer == BlockRenderLayer.TRANSLUCENT ? TexturedRenderLayers.getItemEntityTranslucentCull() : TexturedRenderLayers.getEntityCutout();
+                BufferBuilder builder = (BufferBuilder) this.vertexConsumers.getBuffer(renderLayer);
 
                 matrices.push();
                 this.setupTransforms(matrices, state.x1(), state.y1(), state.size(), state.zLevel(), state.scale());
                 this.renderModel(model, matrices, state.state(), builder);
 
-                ctx.bindTextureDirect(this.getTexture(layer), 0);
+//                ctx.bindTextureDirect(this.getTexture(layer), 0);
+//
 
                 try
                 {
@@ -75,11 +76,12 @@ public class MaLiLibBlockModelGuiElementRenderer extends SpecialGuiElementRender
 
                     if (meshData != null)
                     {
-                        ctx.draw(meshData, false, false, false, false, true);
+//                        ctx.draw(meshData, false, false, false, false, true);
+                        renderLayer.draw(meshData);
                         meshData.close();
                     }
 
-                    ctx.close();
+//                    ctx.close();
                 }
                 catch (Exception err)
                 {
@@ -87,7 +89,7 @@ public class MaLiLibBlockModelGuiElementRenderer extends SpecialGuiElementRender
                 }
 
                 matrices.pop();
-            }
+//            }
         }
     }
 
@@ -111,36 +113,36 @@ public class MaLiLibBlockModelGuiElementRenderer extends SpecialGuiElementRender
         LocalRandom random = new LocalRandom(0);
         List<BlockModelPart> parts = model.getParts(random);
         int l = LightmapTextureManager.pack(15, 15);
-        int[] light = new int[] { l, l, l, l };
-        float[] brightness = new float[] { 0.75f, 0.75f, 0.75f, 1.0f };
-        BlockPos pos = BlockPos.ORIGIN;
+//        int[] light = new int[] { l, l, l, l };
+//        float[] brightness = new float[] { 0.75f, 0.75f, 0.75f, 1.0f };
+//        BlockPos pos = BlockPos.ORIGIN;
 
         if (this.mc.world == null)
         {
             return;
         }
 
-//        this.blockRenderManager.renderBlock(state, BlockPos.ORIGIN, this.mc.world, matrices, builder, false, parts);
+        this.blockRenderManager.renderBlock(state, BlockPos.ORIGIN, this.mc.world, matrices, builder, false, parts);
 
-        for (BlockModelPart part : parts)
-        {
-            for (Direction face : PositionUtils.ALL_DIRECTIONS)
-            {
-                List<BakedQuad> quads = part.getQuads(face);
-
-                if (!quads.isEmpty())
-                {
-                    this.renderQuads(quads, brightness, light, matrices, this.mc.world, pos, state, builder);
-                }
-            }
-
-            List<BakedQuad> quads = part.getQuads(null);
-
-            if (!quads.isEmpty())
-            {
-                this.renderQuads(part.getQuads(null), brightness, light, matrices, this.mc.world, pos, state, builder);
-            }
-        }
+//        for (BlockModelPart part : parts)
+//        {
+//            for (Direction face : PositionUtils.ALL_DIRECTIONS)
+//            {
+//                List<BakedQuad> quads = part.getQuads(face);
+//
+//                if (!quads.isEmpty())
+//                {
+//                    this.renderQuads(quads, brightness, light, matrices, this.mc.world, pos, state, builder);
+//                }
+//            }
+//
+//            List<BakedQuad> quads = part.getQuads(null);
+//
+//            if (!quads.isEmpty())
+//            {
+//                this.renderQuads(part.getQuads(null), brightness, light, matrices, this.mc.world, pos, state, builder);
+//            }
+//        }
     }
 
     private void renderQuads(List<BakedQuad> quads, float[] brightness, int[] light,
