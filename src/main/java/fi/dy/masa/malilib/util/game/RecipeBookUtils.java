@@ -36,7 +36,7 @@ public class RecipeBookUtils
 
     /**
      * Enables Debug mode.
-     * @param toggle ()
+     * @param toggle (Enable|Disable)
      */
     public static void toggleDebugLog(boolean toggle)
     {
@@ -45,7 +45,7 @@ public class RecipeBookUtils
 
     /**
      * Enables Debug Ansi Colors.
-     * @param toggle ()
+     * @param toggle (Enable|Disable)
      */
     public static void toggleAnsiColorLog(boolean toggle)
     {
@@ -54,8 +54,8 @@ public class RecipeBookUtils
 
     /**
      * Get RecipeBookCategory as a string
-     * @param category ()
-     * @return ()
+     * @param category (RecipeBookCategory)
+     * @return (Identifier as a String)
      */
     public static String getRecipeCategoryId(RecipeBookCategory category)
     {
@@ -70,9 +70,9 @@ public class RecipeBookUtils
     }
 
     /**
-     * Get RecipeBookCategory from a string
-     * @param id ()
-     * @return ()
+     * Get RecipeBookCategory from a string or return Null
+     * @param id (Identifier as a string)
+     * @return (RecipeBookCategory|Null)
      */
     public static @Nullable RecipeBookCategory getRecipeCategoryFromId(String id)
     {
@@ -492,7 +492,7 @@ public class RecipeBookUtils
                 list.add(item.getIdAsString());
             }
 
-            LOGGER.info(" {}[{}] // {}", list.toString());
+            LOGGER.info(" {}[{}] // {}", i, side, list.toString());
             i++;
         }
 
