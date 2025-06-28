@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.ApiStatus;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.recipebook.ClientRecipeBook;
@@ -32,16 +34,29 @@ public class RecipeBookUtils
 {
     private static final AnsiLogger LOGGER = new AnsiLogger(RecipeBookUtils.class, MaLiLibReference.DEBUG_MODE, true);
 
+    /**
+     * Enables Debug mode.
+     * @param toggle ()
+     */
     public static void toggleDebugLog(boolean toggle)
     {
         LOGGER.toggleDebug(toggle);
     }
 
+    /**
+     * Enables Debug Ansi Colors.
+     * @param toggle ()
+     */
     public static void toggleAnsiColorLog(boolean toggle)
     {
         LOGGER.toggleAnsiColor(toggle);
     }
 
+    /**
+     * Get RecipeBookCategory as a string
+     * @param category ()
+     * @return ()
+     */
     public static String getRecipeCategoryId(RecipeBookCategory category)
     {
         RegistryKey<RecipeBookCategory> key = Registries.RECIPE_BOOK_CATEGORY.getKey(category).orElse(null);
@@ -54,6 +69,11 @@ public class RecipeBookUtils
         return "";
     }
 
+    /**
+     * Get RecipeBookCategory from a string
+     * @param id ()
+     * @return ()
+     */
     public static @Nullable RecipeBookCategory getRecipeCategoryFromId(String id)
     {
         RegistryEntry.Reference<RecipeBookCategory> catReference = Registries.RECIPE_BOOK_CATEGORY.getEntry(Identifier.tryParse(id)).orElse(null);
@@ -66,7 +86,13 @@ public class RecipeBookUtils
         return null;
     }
 
-    public static @Nullable RecipeDisplayEntry getDisplayEntryFromRecipeBook(ItemStack result)
+    /**
+     * Get all matching RecipeBook Display Entries for a Crafting Result, and filter by Recipe Types.
+     * @param result (Crafting Result Stack)
+     * @param types (Recipe Type list)
+     * @return (List of all matching recipe's and their corresponding NetworkRecipeId)
+     */
+    public static List<Pair<NetworkRecipeId, RecipeDisplayEntry>> getDisplayEntryFromRecipeBook(ItemStack result, List<Type> types)
     {
         MinecraftClient mc = MinecraftClient.getInstance();
 
@@ -77,6 +103,7 @@ public class RecipeBookUtils
 
         ClientRecipeBook recipeBook = mc.player.getRecipeBook();
         Map<NetworkRecipeId, RecipeDisplayEntry> recipeMap = ((IMixinClientRecipeBook) recipeBook).malilib_getRecipeMap();
+        List<Pair<NetworkRecipeId, RecipeDisplayEntry>> list = new ArrayList<>();
 
         for (NetworkRecipeId id : recipeMap.keySet())
         {
@@ -88,15 +115,25 @@ public class RecipeBookUtils
                 continue;
             }
 
-            if (areStacksEqual(result, stacks.getFirst()) && entry.craftingRequirements().isPresent())
+            if (areStacksEqual(result, stacks.getFirst()) && entry.craftingRequirements().isPresent() &&
+                types.contains(Type.fromRecipeDisplay(entry.display())))
             {
-                return entry;
+                list.add(Pair.of(id, entry));
             }
         }
 
-        return null;
+        return list;
     }
 
+    /**
+     * Match the provided RecipeBookEntry to the crafting result, and input stacks, and filter by Recipe Type.
+     * @param result (Crafting Result Stack)
+     * @param recipeStacks (Crafting Input Stacks (Shaped requires Empty slots in this))
+     * @param entry (RecipeDisplayEntry to match)
+     * @param allowed (List of allowed Recipe Types.)
+     * @param mc ()
+     * @return (True|False)
+     */
     public static boolean matchClientRecipeBookEntry(ItemStack result, List<ItemStack> recipeStacks, RecipeDisplayEntry entry, List<Type> allowed, MinecraftClient mc)
     {
         if (mc.world == null || result.isEmpty())
@@ -139,6 +176,14 @@ public class RecipeBookUtils
         return false;
     }
 
+    /**
+     * Match a list of Crafting stacks to a list of Crafting Ingredients, filtered by a list of Recipe Types.
+     * @param left (Crafting Input Stacks)
+     * @param right (Crafting Recipe Ingredients (Each Ingredient contains a list of possible inputs))
+     * @param type (RecipeDisplayEntry type)
+     * @param allowed (List of allowed recipe types)
+     * @return (True|False)
+     */
     public static boolean compareStacksAndIngredients(List<ItemStack> left, List<Ingredient> right, Type type, List<Type> allowed)
     {
         if (left.isEmpty() || right.isEmpty())
@@ -182,6 +227,12 @@ public class RecipeBookUtils
         return false;
     }
 
+    /**
+     * Compare a Shaped Recipe Input to a List of Ingredients
+     * @param left (Crafting Input Stacks)
+     * @param right (Crafting Recipe Ingredients (Each Ingredient contains a list of possible inputs))
+     * @return (True|False)
+     */
     public static boolean compareShapedRecipe(List<ItemStack> left, List<Ingredient> right)
     {
         LOGGER.debug("compareShapedRecipe() --> size left [{}], right [{}]\n", left.size(), right.size());
@@ -219,6 +270,12 @@ public class RecipeBookUtils
         return true;
     }
 
+    /**
+     * Compare a Shapeless Recipe Input to a List of Ingredients
+     * @param left (Crafting Input Stacks)
+     * @param right (Crafting Recipe Ingredients (Each Ingredient contains a list of possible inputs))
+     * @return (True|False)
+     */
     public static boolean compareShapelessRecipe(List<ItemStack> left, List<Ingredient> right)
     {
         LOGGER.debug("compareShapelessRecipe() --> size left [{}], right [{}]", left.size(), right.size());
@@ -251,6 +308,13 @@ public class RecipeBookUtils
         return true;
     }
 
+    /**
+     * Compare a Stonecutter Recipe Input to a List of Ingredients
+     * @param left (Crafting Input Stacks)
+     * @param right (Crafting Recipe Ingredients (Each Ingredient contains a list of possible inputs))
+     * @return (True|False)
+     */
+    @ApiStatus.Experimental
     public static boolean compareStonecutterRecipe(List<ItemStack> left, List<Ingredient> right)
     {
         LOGGER.debug("compareStonecutterRecipe() --> size left [{}], right [{}]", left.size(), right.size());
@@ -283,6 +347,13 @@ public class RecipeBookUtils
         return true;
     }
 
+    /**
+     * Compare a Furnace Recipe Input to a List of Ingredients
+     * @param left (Crafting Input Stacks)
+     * @param right (Crafting Recipe Ingredients (Each Ingredient contains a list of possible inputs))
+     * @return (True|False)
+     */
+    @ApiStatus.Experimental
     public static boolean compareFurnaceRecipe(List<ItemStack> left, List<Ingredient> right)
     {
         LOGGER.debug("compareFurnaceRecipe() --> size left [{}], right [{}]", left.size(), right.size());
@@ -315,6 +386,14 @@ public class RecipeBookUtils
         return true;
     }
 
+    /**
+     * Compare a Smithing Recipe Input to a List of Ingredients
+     * @param left (Crafting Input Stacks)
+     * @param right (Crafting Recipe Ingredients (Each Ingredient contains a list of possible inputs))
+     * @return (True|False)
+     */
+
+    @ApiStatus.Experimental
     public static boolean compareSmithingRecipe(List<ItemStack> left, List<Ingredient> right)
     {
         LOGGER.debug("compareSmithingRecipe() --> size left [{}], right [{}]", left.size(), right.size());
@@ -371,6 +450,12 @@ public class RecipeBookUtils
         return false;
     }
 
+    /**
+     * Compare two item stacks, and return if they are equal.  This method ignores Components, but also considers stack sizes.
+     * @param left (Left Side)
+     * @param right (Right Side)
+     * @return (True|False)
+     */
     public static boolean areStacksEqual(ItemStack left, ItemStack right)
     {
         return ItemStack.areItemsEqual(left, right) && left.getCount() == right.getCount();
@@ -414,6 +499,10 @@ public class RecipeBookUtils
         LOGGER.info("DUMP END [{}]", side);
     }
 
+    /**
+     * Crafting Recipe Types -- This provides an easier way to filter and organize Recipe Book Display
+     * results by Crafting Type; without the complexity of the Vanilla methods for doing this.
+     */
     public enum Type
     {
         FURNACE,
@@ -434,6 +523,19 @@ public class RecipeBookUtils
                 case StonecutterRecipeDisplay ignored -> STONECUTTER;
                 case null, default -> UNKNOWN;
             };
+        }
+
+        public static @Nullable Type matchFromString(String input)
+        {
+            for (Type type : values())
+            {
+                if (type.name().equalsIgnoreCase(input))
+                {
+                    return type;
+                }
+            }
+
+            return null;
         }
     }
 }
