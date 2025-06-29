@@ -19,6 +19,7 @@ import net.minecraft.recipe.display.*;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.context.ContextParameterMap;
 
@@ -137,29 +138,42 @@ public class RecipeBookUtils
         ClientRecipeBook recipeBook = mc.player.getRecipeBook();
         Map<NetworkRecipeId, RecipeDisplayEntry> recipeMap = ((IMixinClientRecipeBook) recipeBook).malilib_getRecipeMap();
         List<Pair<NetworkRecipeId, RecipeDisplayEntry>> list = new ArrayList<>();
+        FeatureSet features = mc.world.getEnabledFeatures();
         ContextParameterMap map = getMap(mc);
+
         if (map == null) return null;
+
+        LOGGER.debug("getDisplayEntryFromRecipeBook(): Checking [{}] recipes", recipeMap.size());
 
         for (NetworkRecipeId id : recipeMap.keySet())
         {
             RecipeDisplayEntry entry = recipeMap.get(id);
-            ItemStack resultSlot = entry.display().result().getFirst(map);
-//            List<ItemStack> stacks = entry.getStacks(map);
+            Type type = Type.fromRecipeDisplay(entry.display());
 
-            if (resultSlot.isEmpty())
+            // The SmithingTrimSlotDisplay causes crashes here; for some reason.
+            if (entry.craftingRequirements().isPresent() &&
+                types.contains(type) &&
+                entry.display().isEnabled(features) &&
+                !(entry.display().result() instanceof SlotDisplay.SmithingTrimSlotDisplay))
             {
-                continue;
-            }
+                LOGGER.debug("ID[{}]: type: [{}] -->", id.index(), type.name());
+                ItemStack resultSlot = entry.display().result().getFirst(map);
+                LOGGER.debug("ID[{}]: resultStack: [{}]", id.index(), resultSlot.getRegistryEntry().getIdAsString());
 
-            if (areStacksEqual(result, resultSlot) &&
-                entry.craftingRequirements().isPresent() &&
-                types.contains(Type.fromRecipeDisplay(entry.display()))
-            )
-            {
-                list.add(Pair.of(id, entry));
+                if (resultSlot.isEmpty())
+                {
+                    continue;
+                }
+
+                if (ItemStack.areItemsEqual(result, resultSlot))
+                {
+                    LOGGER.warn("ID[{}]: type: [{}], resultStack: [{}] --> MATCHED", id.index(), type.name(), resultSlot.getRegistryEntry().getIdAsString());
+                    list.add(Pair.of(id, entry));
+                }
             }
         }
 
+        LOGGER.debug("getDisplayEntryFromRecipeBook(): Matched [{}] recipes", list.size());
         return list;
     }
 
