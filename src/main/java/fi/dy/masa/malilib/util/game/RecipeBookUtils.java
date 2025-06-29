@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import com.google.common.collect.ImmutableList;
+import io.netty.buffer.ByteBuf;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -11,6 +13,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.recipebook.ClientRecipeBook;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
@@ -21,6 +25,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.context.ContextParameterMap;
 
 import fi.dy.masa.malilib.MaLiLib;
@@ -561,7 +566,7 @@ public class RecipeBookUtils
      * Crafting Recipe Types -- This provides an easier way to filter and organize Recipe Book Display
      * results by Crafting Type; without the complexity of the Vanilla methods for doing this.
      */
-    public enum Type
+    public enum Type implements StringIdentifiable
     {
         FURNACE,
         SHAPED,
@@ -569,6 +574,10 @@ public class RecipeBookUtils
         SMITHING,
         STONECUTTER,
         UNKNOWN;
+
+        public static final StringIdentifiable.EnumCodec<Type> CODEC = StringIdentifiable.createCodec(Type::values);
+        public static final PacketCodec<ByteBuf, Type> PACKET_CODEC = PacketCodecs.STRING.xmap(Type::fromStringStatic, Type::asString);
+        public static final ImmutableList<Type> VALUES = ImmutableList.copyOf(values());
 
         public static Type fromRecipeDisplay(RecipeDisplay type)
         {
@@ -583,7 +592,7 @@ public class RecipeBookUtils
             };
         }
 
-        public static @Nullable Type matchFromString(String input)
+        public static @Nullable Type fromStringStatic(String input)
         {
             for (Type type : values())
             {
@@ -594,6 +603,12 @@ public class RecipeBookUtils
             }
 
             return null;
+        }
+
+        @Override
+        public String asString()
+        {
+            return this.name().toLowerCase();
         }
     }
 }
