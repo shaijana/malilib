@@ -143,15 +143,18 @@ public class RecipeBookUtils
         for (NetworkRecipeId id : recipeMap.keySet())
         {
             RecipeDisplayEntry entry = recipeMap.get(id);
-            List<ItemStack> stacks = entry.getStacks(map);
+            ItemStack resultSlot = entry.display().result().getFirst(map);
+//            List<ItemStack> stacks = entry.getStacks(map);
 
-            if (stacks.isEmpty())
+            if (resultSlot.isEmpty())
             {
                 continue;
             }
 
-            if (areStacksEqual(result, stacks.getFirst()) && entry.craftingRequirements().isPresent() &&
-                types.contains(Type.fromRecipeDisplay(entry.display())))
+            if (areStacksEqual(result, resultSlot) &&
+                entry.craftingRequirements().isPresent() &&
+                types.contains(Type.fromRecipeDisplay(entry.display()))
+            )
             {
                 list.add(Pair.of(id, entry));
             }
@@ -488,7 +491,8 @@ public class RecipeBookUtils
     }
 
     /**
-     * Compare two item stacks, and return if they are equal.  This method ignores Components, but also considers stack sizes.
+     * Compare two item stacks, and return if they are equal.
+     * This method ignores Components, but also considers stack sizes.
      * @param left (Left Side)
      * @param right (Right Side)
      * @return (True|False)
