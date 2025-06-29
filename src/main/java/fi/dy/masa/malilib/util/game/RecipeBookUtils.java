@@ -20,6 +20,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.context.ContextParameterMap;
 
 import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.MaLiLibReference;
@@ -33,6 +34,11 @@ import fi.dy.masa.malilib.util.log.AnsiLogger;
 public class RecipeBookUtils
 {
     private static final AnsiLogger LOGGER = new AnsiLogger(RecipeBookUtils.class, MaLiLibReference.DEBUG_MODE, true);
+    public static ContextParameterMap map;
+    private static final int refreshTime = 300;
+    private static long lastRefresh = -1L;
+    // Cache a ContextParameterMap, because Minecraft hates it when you spam this function;
+    // so here we are creating a timer with how often that we could refresh it (in seconds).
 
     /**
      * Enables Debug mode.
@@ -87,6 +93,33 @@ public class RecipeBookUtils
     }
 
     /**
+     * Get a cached Parameter Map; because Minecraft hates it when you call this constantly.
+     * @param mc ()
+     * @return ()
+     */
+    public static @Nullable ContextParameterMap getMap(MinecraftClient mc)
+    {
+        if (mc.world == null) return null;
+
+        if (map == null || (System.currentTimeMillis() - lastRefresh) > (refreshTime * 1000L))
+        {
+            map = SlotDisplayContexts.createParameters(mc.world);
+            lastRefresh = System.currentTimeMillis();
+        }
+
+        return map;
+    }
+
+    /**
+     * Clear it upon exiting a world.
+     */
+    public static void clearMap()
+    {
+        map = null;
+        lastRefresh = -1L;
+    }
+
+    /**
      * Get all matching RecipeBook Display Entries for a Crafting Result, and filter by Recipe Types.
      * @param result (Crafting Result Stack)
      * @param types (Recipe Type list)
@@ -104,11 +137,13 @@ public class RecipeBookUtils
         ClientRecipeBook recipeBook = mc.player.getRecipeBook();
         Map<NetworkRecipeId, RecipeDisplayEntry> recipeMap = ((IMixinClientRecipeBook) recipeBook).malilib_getRecipeMap();
         List<Pair<NetworkRecipeId, RecipeDisplayEntry>> list = new ArrayList<>();
+        ContextParameterMap map = getMap(mc);
+        if (map == null) return null;
 
         for (NetworkRecipeId id : recipeMap.keySet())
         {
             RecipeDisplayEntry entry = recipeMap.get(id);
-            List<ItemStack> stacks = entry.getStacks(SlotDisplayContexts.createParameters(mc.world));
+            List<ItemStack> stacks = entry.getStacks(map);
 
             if (stacks.isEmpty())
             {
@@ -148,7 +183,9 @@ public class RecipeBookUtils
             return false;
         }
          */
-        List<ItemStack> stacks = entry.getStacks(SlotDisplayContexts.createParameters(mc.world));
+        ContextParameterMap map = getMap(mc);
+        if (map == null) return false;
+        List<ItemStack> stacks = entry.getStacks(map);
 
         LOGGER.debug("matchClientRecipeBookEntry() --> [{}] vs [{}]", recipeStacks, stacks.getFirst().toString());
 
