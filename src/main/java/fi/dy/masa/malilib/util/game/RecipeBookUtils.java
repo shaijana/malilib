@@ -142,8 +142,7 @@ public class RecipeBookUtils
         ContextParameterMap map = getMap(mc);
 
         if (map == null) return null;
-
-        LOGGER.debug("getDisplayEntryFromRecipeBook(): Checking [{}] recipes", recipeMap.size());
+//        LOGGER.debug("getDisplayEntryFromRecipeBook(): Checking [{}] recipes", recipeMap.size());
 
         for (NetworkRecipeId id : recipeMap.keySet())
         {
@@ -156,9 +155,7 @@ public class RecipeBookUtils
                 entry.display().isEnabled(features) &&
                 !(entry.display().result() instanceof SlotDisplay.SmithingTrimSlotDisplay))
             {
-                LOGGER.debug("ID[{}]: type: [{}] -->", id.index(), type.name());
                 ItemStack resultSlot = entry.display().result().getFirst(map);
-                LOGGER.debug("ID[{}]: resultStack: [{}]", id.index(), resultSlot.getRegistryEntry().getIdAsString());
 
                 if (resultSlot.isEmpty())
                 {
@@ -167,13 +164,19 @@ public class RecipeBookUtils
 
                 if (ItemStack.areItemsEqual(result, resultSlot))
                 {
-                    LOGGER.warn("ID[{}]: type: [{}], resultStack: [{}] --> MATCHED", id.index(), type.name(), resultSlot.getRegistryEntry().getIdAsString());
+//                    LOGGER.debug("ID[{}]: type: [{}], resultStack: [{}] --> MATCHED", id.index(), type.name(), resultSlot.getRegistryEntry().getIdAsString());
                     list.add(Pair.of(id, entry));
+
+                    // Don't return more than 3 results.
+                    if (list.size() > 2)
+                    {
+                        return list;
+                    }
                 }
             }
         }
 
-        LOGGER.debug("getDisplayEntryFromRecipeBook(): Matched [{}] recipes", list.size());
+//        LOGGER.debug("getDisplayEntryFromRecipeBook(): Matched [{}] recipes", list.size());
         return list;
     }
 
