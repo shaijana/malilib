@@ -388,12 +388,7 @@ public abstract class WidgetListBase<TYPE, WIDGET extends WidgetListEntryBase<TY
     @Override
     public void drawContents(DrawContext drawContext, int mouseX, int mouseY, float partialTicks)
     {
-        RenderUtils.color(1f, 1f, 1f, 1f);
-
-        if (this.widgetSearchBar != null)
-        {
-            this.widgetSearchBar.render(mouseX, mouseY, false, drawContext);
-        }
+//        RenderUtils.color(1f, 1f, 1f, 1f);
 
         WidgetBase hovered = null;
         int scrollbarHeight = this.browserHeight - this.browserEntriesOffsetY - 8;
@@ -408,7 +403,7 @@ public abstract class WidgetListBase<TYPE, WIDGET extends WidgetListEntryBase<TY
 
         int scrollBarX = this.posX + this.browserWidth - 9;
         int scrollBarY = this.browserEntriesStartY + this.browserEntriesOffsetY;
-        this.scrollBar.render(mouseX, mouseY, partialTicks, scrollBarX, scrollBarY, 8, scrollbarHeight, totalHeight, drawContext);
+        this.scrollBar.render(drawContext, mouseX, mouseY, partialTicks, scrollBarX, scrollBarY, 8, scrollbarHeight, totalHeight);
 
         // The value gets updated in the drawScrollBar() method above, if dragging
         if (this.scrollBar.getValue() != this.lastScrollbarPosition)
@@ -422,12 +417,17 @@ public abstract class WidgetListBase<TYPE, WIDGET extends WidgetListEntryBase<TY
         {
             TYPE entry = widget.getEntry();
             boolean isSelected = this.allowMultiSelection ? this.selectedEntries.contains(entry) : entry != null && entry.equals(this.getLastSelectedEntry());
-            widget.render(mouseX, mouseY, isSelected, drawContext);
+            widget.render(drawContext, mouseX, mouseY, isSelected);
 
             if (widget.isMouseOver(mouseX, mouseY))
             {
                 hovered = widget;
             }
+        }
+
+        if (this.widgetSearchBar != null)
+        {
+            this.widgetSearchBar.render(drawContext, mouseX, mouseY, false);
         }
 
         if (hovered == null && this.widgetSearchBar != null && this.widgetSearchBar.isMouseOver(mouseX, mouseY))
@@ -437,7 +437,7 @@ public abstract class WidgetListBase<TYPE, WIDGET extends WidgetListEntryBase<TY
 
         this.hoveredWidget = hovered;
 
-        RenderUtils.color(1f, 1f, 1f, 1f);
+//        RenderUtils.color(1f, 1f, 1f, 1f);
     }
 
     public void setSize(int width, int height)

@@ -163,11 +163,13 @@ public abstract class ButtonBase extends WidgetBase
     }
 
     @Override
-    public void postRenderHovered(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
+        super.postRenderHovered(drawContext, mouseX, mouseY, selected);
+
         if (this.hasHoverText() && this.isMouseOver())
         {
-            RenderUtils.drawHoverText(mouseX, mouseY, this.getHoverStrings(), drawContext);
+            RenderUtils.drawHoverText(drawContext, mouseX, mouseY, this.getHoverStrings());
         }
     }
 }

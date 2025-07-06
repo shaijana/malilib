@@ -1,34 +1,53 @@
 {
-  "required": true,
-  "package": "fi.dy.masa.malilib.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "minVersion": "0.8",
-  "client": [
-    "IMixinAbstractHorseEntity",
-    "IMixinDrawContext",
-    "IMixinHandledScreen",
-    "IMixinPiglinEntity",
-    "IMixinPlayerEntity",
-    "MixinAbstractHorseEntity",
-    "MixinClientConfigurationNetworkHandler",
-    "MixinClientPlayNetworkHandler",
-    "MixinDrawContext",
-    "MixinHandledScreen",
-    "MixinInGameHud",
-    "MixinIntegratedServer",
-    "MixinInventoryScreen",
-    "MixinKeyboard",
-    "MixinMinecraftClient",
-    "MixinMinecraftServer",
-    "MixinMouse",
-    "MixinPiglinEntity",
-    "MixinSimpleInventory",
-    "MixinWorldRenderer"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  },
-  "mixins": [
-    "test.MixinBundleItem"
-  ]
+    "required": true,
+    "package": "fi.dy.masa.malilib.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "minVersion": "0.8",
+    "mixins": [
+        "entity.IMixinAbstractHorseEntity",
+        "entity.IMixinMerchantEntity",
+        "entity.IMixinPiglinEntity",
+        "entity.IMixinPlayerEntity",
+        "entity.MixinAbstractHorseEntity",
+        "entity.MixinPiglinEntity",
+        "entity.MixinSimpleInventory",
+        "item.IMixinContainerComponent",
+        "recipe.IMixinIngredient",
+        "item.MixinItemStack",
+        "nbt.IMixinNbtReadView",
+        "nbt.IMixinNbtWriteView",
+        "server.IMixinServerTickManager",
+        "server.MixinMinecraftServer",
+        "test.MixinBundleItem",
+        "test.MixinSharedConstants"
+    ],
+    "client": [
+        "MixinMinecraftClient",
+        "hud.MixinInGameHud",
+        "input.MixinKeyboard",
+        "input.MixinMouse",
+        "recipe.IMixinClientRecipeBook",
+        "network.IMixinDataQueryHandler",
+        "network.MixinClientConfigurationNetworkHandler",
+        "network.MixinClientPlayNetworkHandler",
+        "render.IMixinAbstractTexture",
+        "render.IMixinBufferBuilder",
+        "render.IMixinDrawContext",
+        "render.IMixinGameRenderer",
+        "render.MixinDebugRenderer",
+        "render.MixinDrawContext",
+        "render.MixinGlBackend",
+        "render.MixinRenderPipelines",
+        "render.MixinWorldRenderer",
+        "screen.IMixinHandledScreen",
+        "screen.MixinChatScreen",
+        "screen.MixinHandledScreen",
+        "screen.MixinInventoryScreen",
+        "server.MixinIntegratedServer",
+        "test.MixinClientPlayInteractionManager"
+    ],
+    "server": [],
+    "injectors": {
+        "defaultRequire": 1
+  }
 }

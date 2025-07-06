@@ -24,7 +24,6 @@ import fi.dy.masa.malilib.gui.interfaces.ISliderCallback;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.hotkeys.IKeybind;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings;
-import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.GuiUtils;
 
 public class WidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrapper>
@@ -206,7 +205,7 @@ public class WidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrapp
             {
                 configWidth -= 22; // adjust the width to match other configs due to the color display
                 this.colorDisplayPosX = x + configWidth + 2;
-                this.addWidget(new WidgetColorIndicator(this.colorDisplayPosX, y + 1, 19, 19, (IConfigInteger) config));
+                this.addWidget(new WidgetColorIndicator(this.colorDisplayPosX, y + 1, 19, 19, (IConfigColor) config));
             }
             else if (type == ConfigType.INTEGER || type == ConfigType.DOUBLE || type == ConfigType.FLOAT)
             {
@@ -397,16 +396,17 @@ public class WidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrapp
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
-        RenderUtils.color(1f, 1f, 1f, 1f);
+        super.render(drawContext, mouseX, mouseY, selected);
+//        RenderUtils.color(1f, 1f, 1f, 1f);
 
-        this.drawSubWidgets(mouseX, mouseY, drawContext);
+        this.drawSubWidgets(drawContext, mouseX, mouseY);
 
         if (this.wrapper.getType() == ConfigOptionWrapper.Type.CONFIG)
         {
-            this.drawTextFields(mouseX, mouseY, drawContext);
-            super.render(mouseX, mouseY, selected, drawContext);
+            this.drawTextFields(drawContext, mouseX, mouseY);
+            super.render(drawContext, mouseX, mouseY, selected);
         }
     }
 

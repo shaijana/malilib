@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -164,34 +165,57 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         }
     }
 
+    /**
+     * For Compat / Crash prevention reasons
+     * @return
+     */
+    public int getScreenHeight()
+    {
+        return this.height;
+    }
+
+    /**
+     * For Compat / Crash prevention reasons
+     * @return
+     */
+    public int getScreenWidth()
+    {
+        return this.width;
+    }
+
     @Override
     public void render(DrawContext drawContext, int mouseX, int mouseY, float partialTicks)
     {
-        // Use a custom DrawContext that doesn't always disable depth test when drawing...
-        //drawContext = new MalilibDrawContext(this.client, drawContext.getVertexConsumers());
         if (this.drawContext == null || this.drawContext.equals(drawContext) == false)
         {
             this.drawContext = drawContext;
         }
 
+        drawContext.createNewRootLayer();
+
+        // Draw Background / Title
         this.drawScreenBackground(drawContext, mouseX, mouseY);
         this.drawTitle(drawContext, mouseX, mouseY, partialTicks);
 
         // Draw base widgets
-        this.drawWidgets(mouseX, mouseY, drawContext);
-        this.drawTextFields(mouseX, mouseY, drawContext);
-        this.drawButtons(mouseX, mouseY, partialTicks, drawContext);
-
+        this.drawWidgets(drawContext, mouseX, mouseY);
+        this.drawButtons(drawContext, mouseX, mouseY, partialTicks);
         this.drawContents(drawContext, mouseX, mouseY, partialTicks);
-
-        this.drawButtonHoverTexts(mouseX, mouseY, partialTicks, drawContext);
-        this.drawHoveredWidget(mouseX, mouseY, drawContext);
+        this.drawTextFields(drawContext, mouseX, mouseY);
+        this.drawHoveredWidget(drawContext, mouseX, mouseY);
+        this.drawButtonHoverTexts(drawContext, mouseX, mouseY, partialTicks);
         this.drawGuiMessages(drawContext);
     }
 
-    protected DrawContext getDrawContext()
+    public DrawContext getDrawContext()
     {
         return this.drawContext;
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks)
+    {
+        // NO BLUR / MASKING
     }
 
     @Override
@@ -482,12 +506,7 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
 
     protected void drawGuiMessages(DrawContext drawContext)
     {
-        this.messageRenderer.drawMessages(this.width / 2, this.height / 2, drawContext);
-    }
-
-    public void bindTexture(Identifier texture)
-    {
-        RenderUtils.bindTexture(texture);
+        this.messageRenderer.drawMessages(drawContext, this.width / 2, this.height / 2);
     }
 
     public <T extends ButtonBase> T addButton(T button, IButtonActionListener listener)
@@ -564,15 +583,16 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         this.textFields.clear();
     }
 
-    protected void drawScreenBackground(int mouseX, int mouseY)
-    {
-        this.drawScreenBackground(this.getDrawContext(), mouseX, mouseY);
-    }
-
+    /**
+     * Draw's an Screen Tooltip Background
+     * @param drawContext ()
+     * @param mouseX ()
+     * @param mouseY ()
+     */
     protected void drawScreenBackground(DrawContext drawContext, int mouseX, int mouseY)
     {
         // Draw the dark background
-        RenderUtils.drawRect(0, 0, this.width, this.height, TOOLTIP_BACKGROUND);
+        RenderUtils.drawRect(drawContext, 0, 0, this.width, this.height, TOOLTIP_BACKGROUND);
     }
 
     /**
@@ -590,10 +610,11 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
     {
         if (blur)
         {
-            super.applyBlur();
+            super.applyBlur(drawContext);
         }
 
-        RenderUtils.drawTexturedRect(GuiBase.BG_TEXTURE, topX, topY, 0, 0, width, height, drawContext);
+//        RenderUtils.drawTexturedRect(drawContext, GuiBase.BG_TEXTURE, topX, topY, 0, 0, width, height, true);
+        super.renderDarkening(drawContext, topX, topY, width, height);
     }
 
     protected void drawTitle(DrawContext drawContext, int mouseX, int mouseY, float partialTicks)
@@ -605,23 +626,23 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
     {
     }
 
-    protected void drawButtons(int mouseX, int mouseY, float partialTicks, DrawContext drawContext)
+    protected void drawButtons(DrawContext drawContext, int mouseX, int mouseY, float partialTicks)
     {
         for (ButtonBase button : this.buttons)
         {
-            button.render(mouseX, mouseY, button.isMouseOver(), drawContext);
+            button.render(drawContext, mouseX, mouseY, button.isMouseOver());
         }
     }
 
-    protected void drawTextFields(int mouseX, int mouseY, DrawContext drawContext)
+    protected void drawTextFields(DrawContext drawContext, int mouseX, int mouseY)
     {
         for (TextFieldWrapper<?> entry : this.textFields)
         {
-            entry.draw(mouseX, mouseY, drawContext);
+            entry.draw(drawContext, mouseX, mouseY);
         }
     }
 
-    protected void drawWidgets(int mouseX, int mouseY, DrawContext drawContext)
+    protected void drawWidgets(DrawContext drawContext, int mouseX, int mouseY)
     {
         this.hoveredWidget = null;
 
@@ -629,7 +650,7 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         {
             for (WidgetBase widget : this.widgets)
             {
-                widget.render(mouseX, mouseY, false, drawContext);
+                widget.render(drawContext, mouseX, mouseY, false);
 
                 if (widget.isMouseOver(mouseX, mouseY))
                 {
@@ -639,7 +660,7 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         }
     }
 
-    protected void drawButtonHoverTexts(int mouseX, int mouseY, float partialTicks, DrawContext drawContext)
+    protected void drawButtonHoverTexts(DrawContext drawContext, int mouseX, int mouseY, float partialTicks)
     {
         if (this.shouldRenderHoverStuff() == false)
         {
@@ -650,7 +671,7 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         {
             if (button.hasHoverText() && button.isMouseOver())
             {
-                RenderUtils.drawHoverText(mouseX, mouseY, button.getHoverStrings(), drawContext);
+                RenderUtils.drawHoverText(drawContext, mouseX, mouseY, button.getHoverStrings());
             }
         }
     }
@@ -660,7 +681,7 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
         return this.mc.currentScreen == this;
     }
 
-    protected void drawHoveredWidget(int mouseX, int mouseY, DrawContext drawContext)
+    protected void drawHoveredWidget(DrawContext drawContext, int mouseX, int mouseY)
     {
         if (this.shouldRenderHoverStuff() == false)
         {
@@ -669,7 +690,7 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
 
         if (this.hoveredWidget != null)
         {
-            this.hoveredWidget.postRenderHovered(mouseX, mouseY, false, drawContext);
+            this.hoveredWidget.postRenderHovered(drawContext, mouseX, mouseY, false);
         }
     }
 
@@ -685,12 +706,12 @@ public abstract class GuiBase extends Screen implements IMessageConsumer, IStrin
 
     public void drawString(DrawContext drawContext, String text, int x, int y, int color)
     {
-        drawContext.drawText(textRenderer, text, x, y, color, false);
+        drawContext.drawText(this.textRenderer, text, x, y, color, false);
     }
 
     public void drawStringWithShadow(DrawContext drawContext, String text, int x, int y, int color)
     {
-        drawContext.drawTextWithShadow(textRenderer, text, x, y, color);
+        drawContext.drawTextWithShadow(this.textRenderer, text, x, y, color);
     }
 
     public int getMaxPrettyNameLength(List<? extends IConfigBase> configs)

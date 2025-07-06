@@ -1,11 +1,14 @@
 package fi.dy.masa.malilib;
 
-import fi.dy.masa.malilib.registry.Registry;
-import fi.dy.masa.malilib.util.data.ModInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import net.fabricmc.api.ModInitializer;
+
+import fi.dy.masa.malilib.data.MaLiLibTag;
 import fi.dy.masa.malilib.event.InitializationHandler;
+import fi.dy.masa.malilib.registry.Registry;
+import fi.dy.masa.malilib.util.data.ModInfo;
 
 public class MaLiLib implements ModInitializer
 {
@@ -17,6 +20,8 @@ public class MaLiLib implements ModInitializer
         Registry.CONFIG_SCREEN.registerConfigScreenFactory(
                 new ModInfo(MaLiLibReference.MOD_ID, MaLiLibReference.MOD_NAME, MaLiLibConfigGui::new)
         );
+
+        MaLiLibTag.register();
     }
 
     public static void debugLog(String key, Object... args)

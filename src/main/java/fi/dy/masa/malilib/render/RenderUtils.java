@@ -1,32 +1,44 @@
 package fi.dy.masa.malilib.render;
 
 import java.util.*;
-import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.joml.Matrix3x2f;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlConst;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.ShaderProgramKeys;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.ScreenRect;
+import net.minecraft.client.gui.render.SpecialGuiElementRenderer;
+import net.minecraft.client.gui.render.state.ItemGuiElementRenderState;
+import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
+import net.minecraft.client.gui.render.state.TextGuiElementRenderState;
+import net.minecraft.client.gui.render.state.special.SpecialGuiElementRenderState;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BlockModelPart;
+import net.minecraft.client.render.model.BlockStateModel;
+import net.minecraft.client.texture.ResourceTexture;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.texture.TextureSetup;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.ComponentMap;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -35,185 +47,401 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
 import net.minecraft.item.map.MapState;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.util.Colors;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.LocalRandom;
+import net.minecraft.village.VillagerData;
+import net.minecraft.village.VillagerProfession;
 
+import fi.dy.masa.malilib.MaLiLib;
 import fi.dy.masa.malilib.config.HudAlignment;
 import fi.dy.masa.malilib.gui.GuiBase;
-import fi.dy.masa.malilib.mixin.IMixinDrawContext;
+import fi.dy.masa.malilib.mixin.render.IMixinAbstractTexture;
+import fi.dy.masa.malilib.mixin.render.IMixinDrawContext;
+import fi.dy.masa.malilib.render.element.*;
 import fi.dy.masa.malilib.util.*;
-import fi.dy.masa.malilib.util.PositionUtils.HitPart;
+import fi.dy.masa.malilib.util.data.Color4f;
+import fi.dy.masa.malilib.util.log.AnsiLogger;
 import fi.dy.masa.malilib.util.nbt.NbtBlockUtils;
+import fi.dy.masa.malilib.util.position.PositionUtils;
 
 public class RenderUtils
 {
+    private static final AnsiLogger LOGGER = new AnsiLogger(RenderUtils.class);
     public static final Identifier TEXTURE_MAP_BACKGROUND = Identifier.ofVanilla("textures/map/map_background.png");
     public static final Identifier TEXTURE_MAP_BACKGROUND_CHECKERBOARD = Identifier.ofVanilla("textures/map/map_background_checkerboard.png");
 
     private static final LocalRandom RAND = new LocalRandom(0);
+
     //private static final Vec3d LIGHT0_POS = (new Vec3d( 0.2D, 1.0D, -0.7D)).normalize();
     //private static final Vec3d LIGHT1_POS = (new Vec3d(-0.2D, 1.0D,  0.7D)).normalize();
 
-    public static void setupBlend()
+    @Deprecated
+    public static void blend(boolean toggle)
     {
-        RenderSystem.enableBlend();
-        RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ZERO);
+        //RenderSystem.enableBlend();
+        //RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ZERO);
+
+        if (toggle)
+        {
+            GlStateManager._enableBlend();
+            GlStateManager._blendFuncSeparate(770, 771, 1, 0);
+        }
+        else
+        {
+            GlStateManager._disableBlend();
+        }
     }
 
+    /*
     public static void setupBlendSimple()
     {
-        RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
+        //RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
+    }
+     */
+
+    @Deprecated
+    public static void depthTest(boolean toggle)
+    {
+        if (toggle)
+        {
+            GlStateManager._enableDepthTest();
+        }
+        else
+        {
+            GlStateManager._disableDepthTest();
+        }
     }
 
-    public static void bindTexture(Identifier texture)
+    @Deprecated
+    public static void depthFunc(int depth)
     {
-        RenderSystem.setShaderTexture(0, texture);
+        GlStateManager._depthFunc(depth);
+    }
+
+    @Deprecated
+    public static void depthMask(boolean toggle)
+    {
+        GlStateManager._depthMask(toggle);
+    }
+
+    @Deprecated
+    public static void culling(boolean toggle)
+    {
+        if (toggle)
+        {
+            GlStateManager._enableCull();
+        }
+        else
+        {
+            GlStateManager._disableCull();
+        }
+    }
+
+    @Deprecated
+    public static void polygonOffset(boolean toggle)
+    {
+        if (toggle)
+        {
+            GlStateManager._enablePolygonOffset();
+        }
+        else
+        {
+            GlStateManager._disablePolygonOffset();
+        }
+    }
+
+    @Deprecated
+    public static void polygonOffset(float factor, float units)
+    {
+        GlStateManager._polygonOffset(factor, units);
+    }
+
+    @Deprecated
+    public static void fbStartDrawing()
+    {
+        RenderSystem.assertOnRenderThread();
+        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, 0);
     }
 
     /**
-     * Bind a Texture using DrawContext.
-     *
-     * @param texture
-     * @param drawContext
-     * @return
+     * Attempts to bind the Shader Texture
+     * @param texture ()
+     * @param textureId ()
+     * @return ()
      */
-    public static VertexConsumer bindTexture(Identifier texture, DrawContext drawContext)
+    public static ResourceTexture bindShaderTexture(Identifier texture, int textureId) throws RuntimeException
     {
-        return getVertexConsumer(getTextureLayer(RenderLayer::getGuiTexturedOverlay, texture), drawContext);
+        if (textureId < 0 || textureId > 12)
+        {
+            throw new RuntimeException("Invalid textureId of: " + textureId + " for texture: " + texture.toString());
+        }
+
+        ResourceTexture tex = (ResourceTexture) tex().getTexture(texture);
+        tex.setFilter(false, false);
+        RenderSystem.setShaderTexture(textureId, tex.getGlTextureView());
+
+        return tex;
     }
 
     /**
-     * Get RenderLayer based on the function, and apply the texture.
+     * Attempt a simple binding of a GpuTexture, returns null if failed to loadContents.
      *
-     * @param function
-     * @param texture
-     * @return
+     * @param texture ()
+     * @return ()
      */
-    public static RenderLayer getTextureLayer(Function<Identifier, RenderLayer> function, Identifier texture)
+    public static @Nullable GpuTexture bindGpuTexture(Identifier texture)
     {
-        return (RenderLayer) function.apply(texture);
+        ResourceTexture tex = (ResourceTexture) tex().getTexture(texture);
+
+        if (tex != null && ((IMixinAbstractTexture) tex).malilib_getGlTexture() != null)
+        {
+            return tex.getGlTexture();
+        }
+
+        return null;
     }
 
     /**
-     * Get the VertexConsumer for the texture Layer from DrawContext.
+     * Attempt a simple binding of a GpuTextureView, returns null if failed to loadContents.
      *
-     * @param textureLayer
-     * @param drawContext
-     * @return
+     * @param texture ()
+     * @return ()
      */
-    public static VertexConsumer getVertexConsumer(RenderLayer textureLayer, DrawContext drawContext)
+    public static @Nullable GpuTextureView bindGpuTextureView(Identifier texture)
     {
-        return ((IMixinDrawContext) drawContext).malilib_getVertexConsumers().getBuffer(textureLayer);
+        ResourceTexture tex = (ResourceTexture) tex().getTexture(texture);
+
+        if (tex != null && ((IMixinAbstractTexture) tex).malilib_getGlTextureView() != null)
+        {
+            return tex.getGlTextureView();
+        }
+
+        MaLiLib.LOGGER.error("bindGpuTextureView: Result is null!");
+        return null;
     }
 
     /**
-     * Executes the draw() operation on the DrawContext.
+     * Add a 'Simple' Element to the DrawContext.
+     * Don't forget to manage the Layers / Checkpoints.
      *
-     * @param drawContext
+     * @param drawContext ()
+     * @param simpleElement ()
      */
-    public static void forceDraw(DrawContext drawContext)
+    public static void addSimpleElement(DrawContext drawContext, SimpleGuiElementRenderState simpleElement)
     {
-        drawContext.draw();
+        ((IMixinDrawContext) drawContext).malilib_getRenderState().addSimpleElement(simpleElement);
     }
 
-    public static void color(float r, float g, float b, float a)
+    /**
+     * Add a 'Special' Element to the DrawContext
+     * Don't forget to manage the Layers / Checkpoints.
+     *
+     * @param drawContext ()
+     * @param specialElement ()
+     */
+    public static void addSpecialElement(DrawContext drawContext, SpecialGuiElementRenderState specialElement)
     {
-        RenderSystem.setShaderColor(r, g, b, a);
+        ((IMixinDrawContext) drawContext).malilib_getRenderState().addSpecialElement(specialElement);
     }
 
-    public static void disableDiffuseLighting()
+    // FIXME
+/*
+    @ApiStatus.Internal
+    public static void registerSpecialGuiRenderers(GuiRenderer guiRenderer, VertexConsumerProvider.Immediate immediate, MinecraftClient mc)
     {
-        // FIXME 1.15-pre4+
-        DiffuseLighting.disableGuiDepthLighting();
+        ImmutableMap.Builder<Class<? extends SpecialGuiElementRenderState>, SpecialGuiElementRenderer<?>> builder = new ImmutableMap.Builder<>();
+
+        // Build new ImmutableMap
+        builder.putAll(((IMixinGuiRenderer) guiRenderer).malilib_getSpecialGuiRenderers());
+
+        // Add Gui Block Model Renderer
+        builder.put(MaLiLibBlockStateModelGuiElement.class, new MaLiLibBlockModelGuiElementRenderer(immediate, mc.getBlockRenderManager()));
+
+        // Event Callback
+        ((RenderEventHandler) RenderEventHandler.getInstance()).onRegisterSpecialGuiRenderer(guiRenderer, immediate, mc, builder);
+
+        // Invoke / Update
+        ((IGuiRendererInvoker) guiRenderer).malilib$replaceSpecialGuiRenderers(builder.buildOrThrow());
+
+        // Debug Built Map
+        if (MaLiLibReference.DEBUG_MODE)
+        {
+            dumpBuilderMap(((IMixinGuiRenderer) guiRenderer).malilib_getSpecialGuiRenderers());
+        }
+    }
+*/
+
+    private static void dumpBuilderMap(Map<Class<? extends SpecialGuiElementRenderState>, SpecialGuiElementRenderer<?>> entries)
+    {
+        System.out.print("DUMP SpecialGuiRenderers()\n");
+
+        if (entries == null || entries.size() == 0)
+        {
+            System.out.print("NULL OR EMPTY!\n");
+            return;
+        }
+
+        int i = 0;
+
+        for (Class<? extends SpecialGuiElementRenderState> entry : entries.keySet())
+        {
+            System.out.printf("[%d] K (State): [%s], V (Renderer): [%s]\n", i, entry.getName(), entries.get(entry).getClass().getName());
+            i++;
+        }
+
+        System.out.print("DUMP END\n");
     }
 
-    public static void enableDiffuseLightingForLevel()
+    /**
+     * Add a 'Item' Element to the DrawContext
+     * Don't forget to manage the Layers / Checkpoints.
+     *
+     * @param drawContext ()
+     * @param itemElement ()
+     */
+    public static void addItemElement(DrawContext drawContext, ItemGuiElementRenderState itemElement)
     {
-        DiffuseLighting.enableForLevel();
+        ((IMixinDrawContext) drawContext).malilib_getRenderState().addItem(itemElement);
     }
 
-    public static void enableDiffuseLightingGui3D()
+    /**
+     * Add a 'Text' Element to the DrawContext.
+     * Don't forget to manage the Layers / Checkpoints.
+     *
+     * @param drawContext ()
+     * @param textElement ()
+     */
+    public static void addTextElement(DrawContext drawContext, TextGuiElementRenderState textElement)
     {
-        // FIXME 1.15-pre4+
-        DiffuseLighting.enableGuiDepthLighting();
+        ((IMixinDrawContext) drawContext).malilib_getRenderState().addText(textElement);
     }
 
-    public static void drawOutlinedBox(int x, int y, int width, int height, int colorBg, int colorBorder)
+    /**
+     * Pushes the Scissor Stack using rect
+     * @param drawContext ()
+     * @param rect ()
+     */
+    public static void pushScissor(DrawContext drawContext, @Nonnull ScreenRect rect)
     {
-        drawOutlinedBox(x, y, width, height, colorBg, colorBorder, 0f);
+        ((IMixinDrawContext) drawContext).malilib_getScissorStack().push(rect);
     }
 
-    public static void drawOutlinedBox(int x, int y, int width, int height, int colorBg, int colorBorder, float zLevel)
+    /**
+     * Returns if the Scissor Stack contains the position x, y
+     * @param drawContext ()
+     * @param x ()
+     * @param y ()
+     * @return ()
+     */
+    public static boolean containsScissor(DrawContext drawContext, int x, int y)
+    {
+        return ((IMixinDrawContext) drawContext).malilib_getScissorStack().contains(x, y);
+    }
+
+    /**
+     * Peeks the Scissor Stack's Screen Rect
+     * @param drawContext ()
+     * @return ()
+     */
+    public static ScreenRect peekLastScissor(DrawContext drawContext)
+    {
+        return ((IMixinDrawContext) drawContext).malilib_getScissorStack().peekLast();
+    }
+
+    /**
+     * Pop's the Scissor Stack's Screen Rect
+     * @param drawContext ()
+     * @return ()
+     */
+    public static ScreenRect popScissor(DrawContext drawContext)
+    {
+        return ((IMixinDrawContext) drawContext).malilib_getScissorStack().pop();
+    }
+
+    public static void drawOutlinedBox(DrawContext drawContext, int x, int y, int width, int height, int colorBg, int colorBorder)
     {
         // Draw the background
-        drawRect(x, y, width, height, colorBg, zLevel);
+        drawRect(drawContext, x, y, width, height, colorBg);
 
         // Draw the border
-        drawOutline(x - 1, y - 1, width + 2, height + 2, colorBorder, zLevel);
+        drawOutline(drawContext, x - 1, y - 1, width + 2, height + 2, colorBorder);
     }
 
-    public static void drawOutline(int x, int y, int width, int height, int colorBorder)
+    public static void drawOutlinedBox(DrawContext drawContext, int x, int y, int width, int height, float scale, int colorBg, int colorBorder)
     {
-        drawOutline(x, y, width, height, colorBorder, 0f);
+        // Draw the background
+        drawRect(drawContext, x, y, width, height, colorBg, scale);
+
+        // Draw the border
+        drawOutline(drawContext, x - 1, y - 1, width + 2, height + 2, scale, colorBorder);
     }
 
-    public static void drawOutline(int x, int y, int width, int height, int colorBorder, float zLevel)
+    public static void drawOutline(DrawContext drawContext, int x, int y, int width, int height, int colorBorder)
     {
-        drawRect(x                    , y,      1, height, colorBorder, zLevel); // left edge
-        drawRect(x + width - 1        , y,      1, height, colorBorder, zLevel); // right edge
-        drawRect(x + 1,              y, width - 2,      1, colorBorder, zLevel); // top edge
-        drawRect(x + 1, y + height - 1, width - 2,      1, colorBorder, zLevel); // bottom edge
+        drawOutline(drawContext, x, y, width, height, 1, colorBorder);
     }
 
-    public static void drawOutline(int x, int y, int width, int height, int borderWidth, int colorBorder)
+    public static void drawOutline(DrawContext drawContext, int x, int y, int width, int height, float scale, int colorBorder)
     {
-        drawOutline(x, y, width, height, borderWidth, colorBorder, 0f);
+        drawOutline(drawContext, x, y, width, height, scale, 1, colorBorder);
     }
 
-    public static void drawOutline(int x, int y, int width, int height, int borderWidth, int colorBorder, float zLevel)
+    public static void drawOutline(DrawContext drawContext, int x, int y, int width, int height, int borderWidth, int colorBorder)
     {
-        drawRect(x                      ,                        y, borderWidth            , height     , colorBorder, zLevel); // left edge
-        drawRect(x + width - borderWidth,                        y, borderWidth            , height     , colorBorder, zLevel); // right edge
-        drawRect(x + borderWidth        ,                        y, width - 2 * borderWidth, borderWidth, colorBorder, zLevel); // top edge
-        drawRect(x + borderWidth        , y + height - borderWidth, width - 2 * borderWidth, borderWidth, colorBorder, zLevel); // bottom edge
+        drawRect(drawContext, x, y, borderWidth, height, colorBorder); // left edge
+        drawRect(drawContext, x + width - borderWidth, y, borderWidth, height, colorBorder); // right edge
+        drawRect(drawContext, x + borderWidth, y, width - 2 * borderWidth, borderWidth, colorBorder); // top edge
+        drawRect(drawContext, x + borderWidth, y + height - borderWidth, width - 2 * borderWidth, borderWidth, colorBorder); // bottom edge
     }
 
-    public static void drawTexturedRect(int x, int y, int u, int v, int width, int height)
+    public static void drawOutline(DrawContext drawContext, int x, int y, int width, int height, float scale, int borderWidth, int colorBorder)
     {
-        drawTexturedRect(x, y, u, v, width, height, 0);
+        drawRect(drawContext, x, y, borderWidth, height, colorBorder, scale); // left edge
+        drawRect(drawContext, x + width - borderWidth, y, borderWidth, height, colorBorder, scale); // right edge
+        drawRect(drawContext, x + borderWidth, y, width - 2 * borderWidth, borderWidth, colorBorder, scale); // top edge
+        drawRect(drawContext, x + borderWidth, y + height - borderWidth, width - 2 * borderWidth, borderWidth, colorBorder, scale); // bottom edge
     }
 
+    @Deprecated
     public static void drawRect(int x, int y, int width, int height, int color)
     {
         drawRect(x, y, width, height, color, 0f);
     }
 
-    public static void drawRect(int x, int y, int width, int height, int color, float zLevel)
+    @Deprecated
+    public static void drawRect(int x, int y, int width, int height, int color, boolean depthMask)
     {
-        drawRect(x, y, width, height, color, zLevel, 1.0f);
+        drawRect(x, y, width, height, color, 0f, 1.0f, depthMask);
     }
 
-    public static void drawRect(int x, int y, int width, int height, int color, float zLevel, float scale)
+    @Deprecated
+    public static void drawRect(int x, int y, int width, int height, int color, float zLevel)
+    {
+        drawRect(x, y, width, height, color, zLevel, 1.0f, false);
+    }
+
+    @Deprecated
+    public static void drawRect(int x, int y, int width, int height, int color, float zLevel, boolean depthMask)
+    {
+        drawRect(x, y, width, height, color, zLevel, 1.0f, depthMask);
+    }
+
+    @Deprecated
+    public static void drawRect(int x, int y, int width, int height, int color, float zLevel, float scale, boolean depthMask)
     {
         float a = (float) (color >> 24 & 255) / 255.0F;
         float r = (float) (color >> 16 & 255) / 255.0F;
-        float g = (float) (color >>  8 & 255) / 255.0F;
+        float g = (float) (color >> 8 & 255) / 255.0F;
         float b = (float) (color & 255) / 255.0F;
 
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-        //RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        //RenderSystem.applyModelViewMatrix();
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        BuiltBuffer builtBuffer;
-
-        setupBlend();
+        // POSITION_COLOR_SIMPLE
+        RenderContext ctx = new RenderContext(() -> "malilib:drawRect", depthMask ? MaLiLibPipelines.POSITION_COLOR_MASA_DEPTH_MASK : MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL);
+        BufferBuilder buffer = ctx.getBuilder();
 
         buffer.vertex(x * scale,           y * scale,            zLevel).color(r, g, b, a);
         buffer.vertex(x * scale,           (y + height) * scale, zLevel).color(r, g, b, a);
@@ -222,13 +450,47 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
-        }
-        catch (Exception ignored) { }
+            BuiltBuffer meshData = buffer.endNullable();
 
-        RenderSystem.disableBlend();
+            if (meshData != null)
+            {
+                ctx.draw(meshData, false);
+                meshData.close();
+            }
+
+            ctx.close();
+        }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("drawRect(): Draw Exception; {}", err.getMessage());
+        }
+    }
+
+    /**
+     * New DrawContext based drawRect() for GUI Rendering.
+     * @param drawContext
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @param color
+     */
+    public static void drawRect(DrawContext drawContext, int x, int y, int width, int height, int color)
+    {
+        drawRect(drawContext, x, y, width, height, color, 1.0f);
+    }
+
+    public static void drawRect(DrawContext drawContext, int x, int y, int width, int height, int color, float scale)
+    {
+        addSimpleElement(drawContext, new MaLiLibBasicRectGuiElement(
+                RenderPipelines.GUI,
+                TextureSetup.empty(),
+                new Matrix3x2f(drawContext.getMatrices()),
+                x, y,
+                width, height,
+                scale, color,
+                peekLastScissor(drawContext))
+        );
     }
 
     /**
@@ -241,35 +503,34 @@ public class RenderUtils
         mc.gameRenderer.renderBlur();
     }
 
-    public static void drawTexturedRect(int x, int y, int u, int v, int width, int height, float zLevel)
+    @Deprecated
+    public static void drawTexturedRect(Matrix4f posMatrix, int x, int y, int u, int v, int width, int height, VertexConsumer buffer)
+    {
+        drawTexturedRect(posMatrix, x, y, u, v, width, height, 0f, -1, buffer);
+    }
+
+    @Deprecated
+    public static void drawTexturedRect(Matrix4f posMatrix, int x, int y, int u, int v, int width, int height, int color, VertexConsumer buffer)
+    {
+        drawTexturedRect(posMatrix, x, y, u, v, width, height, 0f, color, buffer);
+    }
+
+    @Deprecated
+    public static void drawTexturedRect(Matrix4f posMatrix, int x, int y, int u, int v, int width, int height, float zLevel, int color, VertexConsumer buffer)
     {
         float pixelWidth = 0.00390625F;
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX);
-        //RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-        //RenderSystem.applyModelViewMatrix();
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-        BuiltBuffer builtBuffer;
 
-        setupBlend();
-
-        buffer.vertex(x           , y + height, zLevel).texture( u          * pixelWidth, (v + height) * pixelWidth);
-        buffer.vertex(x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth);
-        buffer.vertex(x + width, y            , zLevel).texture((u + width) * pixelWidth,  v           * pixelWidth);
-        buffer.vertex(x           , y            , zLevel).texture( u          * pixelWidth,  v           * pixelWidth);
-
-        try
-        {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
-        }
-        catch (Exception ignored) { }
+        // GUI_TEXTURED_OVERLAY
+        buffer.vertex(posMatrix, x, y + height, zLevel).texture(u * pixelWidth, (v + height) * pixelWidth).color(color);
+        buffer.vertex(posMatrix, x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth).color(color);
+        buffer.vertex(posMatrix, x + width, y, zLevel).texture((u + width) * pixelWidth, v * pixelWidth).color(color);
+        buffer.vertex(posMatrix, x, y, zLevel).texture(u * pixelWidth, v * pixelWidth).color(color);
     }
 
     /**
      * New DrawContext-based Textured Rect method.  Use this when the original method fails.
      *
+     * @param drawContext
      * @param texture
      * @param x
      * @param y
@@ -277,16 +538,16 @@ public class RenderUtils
      * @param v
      * @param width
      * @param height
-     * @param drawContext
      */
-    public static void drawTexturedRect(Identifier texture, int x, int y, int u, int v, int width, int height, DrawContext drawContext)
+    public static void drawTexturedRect(DrawContext drawContext, Identifier texture, int x, int y, int u, int v, int width, int height)
     {
-        drawTexturedRect(texture, x, y, u, v, width, height, 0F, -1, drawContext);
+        drawTexturedRect(drawContext, texture, x, y, u, v, width, height, 0F, -1);
     }
 
     /**
      * New DrawContext-based Textured Rect method.  Use this when the original method fails.
      *
+     * @param drawContext
      * @param texture
      * @param x
      * @param y
@@ -295,16 +556,16 @@ public class RenderUtils
      * @param width
      * @param height
      * @param zLevel
-     * @param drawContext
      */
-    public static void drawTexturedRect(Identifier texture, int x, int y, int u, int v, int width, int height, float zLevel, DrawContext drawContext)
+    public static void drawTexturedRect(DrawContext drawContext, Identifier texture, int x, int y, int u, int v, int width, int height, float zLevel)
     {
-        drawTexturedRect(texture, x, y, u, v, width, height, zLevel, -1, drawContext);
+        drawTexturedRect(drawContext, texture, x, y, u, v, width, height, zLevel, -1);
     }
 
     /**
      * New DrawContext-based Textured Rect method.  Use this when the original method fails.
      *
+     * @param drawContext
      * @param texture
      * @param x
      * @param y
@@ -314,48 +575,81 @@ public class RenderUtils
      * @param height
      * @param zLevel
      * @param argb
-     * @param drawContext
      */
-    public static void drawTexturedRect(Identifier texture, int x, int y, int u, int v, int width, int height, float zLevel, int argb, DrawContext drawContext)
+    public static void drawTexturedRect(DrawContext drawContext, Identifier texture, int x, int y, int u, int v, int width, int height, float zLevel, int argb)
+    {
+        float pixelWidth = 0.00390625F;
+        GpuTextureView gpuTextureView = bindGpuTextureView(texture);
+
+        if (gpuTextureView == null)
+        {
+            MaLiLib.LOGGER.error("drawTexturedRect(): GpuTextureView for '{}' is null!", texture.toString());
+            return;
+        }
+
+        addSimpleElement(drawContext, new MaLiLibTexturedGuiElement(
+                RenderPipelines.GUI_TEXTURED,
+                TextureSetup.withoutGlTexture(gpuTextureView),
+                new Matrix3x2f(drawContext.getMatrices()),
+                x, y, x + width, y + height,
+                u * pixelWidth, (u + width) * pixelWidth,
+                v * pixelWidth, (v + height) * pixelWidth,
+                argb,
+                peekLastScissor(drawContext))
+        );
+    }
+
+    @Deprecated
+    public static void drawTexturedRectBatched(int x, int y, int u, int v, int width, int height, VertexConsumer buffer)
+    {
+        drawTexturedRectBatched(x, y, u, v, width, height, 0, -1, buffer);
+    }
+
+    @Deprecated
+    public static void drawTexturedRectBatched(int x, int y, int u, int v, int width, int height, int argb, VertexConsumer buffer)
+    {
+        drawTexturedRectBatched(x, y, u, v, width, height, 0, argb, buffer);
+    }
+
+    @Deprecated
+    public static void drawTexturedRectBatched(int x, int y, int u, int v, int width, int height, float zLevel, int argb, VertexConsumer buffer)
     {
         float pixelWidth = 0.00390625F;
 
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR);
-        setupBlend();
-        VertexConsumer vertexConsumer = bindTexture(texture, drawContext);
-        Matrix4f matrix4f = drawContext.getMatrices().peek().getPositionMatrix();
-
-        vertexConsumer.vertex(matrix4f, x          , y + height   , zLevel).texture( u          * pixelWidth, (v + height) * pixelWidth).color(argb);
-        vertexConsumer.vertex(matrix4f,x + width, y + height   , zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth).color(argb);
-        vertexConsumer.vertex(matrix4f, x + width  , y            , zLevel).texture((u + width) * pixelWidth,  v           * pixelWidth).color(argb);
-        vertexConsumer.vertex(matrix4f, x             , y            , zLevel).texture( u          * pixelWidth,  v           * pixelWidth).color(argb);
-
-        forceDraw(drawContext);
+        buffer.vertex(x, y + height, zLevel).texture(u * pixelWidth, (v + height) * pixelWidth).color(argb);
+        buffer.vertex(x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth).color(argb);
+        buffer.vertex(x + width, y, zLevel).texture((u + width) * pixelWidth, v * pixelWidth).color(argb);
+        buffer.vertex(x, y, zLevel).texture(u * pixelWidth, v * pixelWidth).color(argb);
     }
 
-    public static void drawTexturedRectBatched(int x, int y, int u, int v, int width, int height, BufferBuilder buffer)
+    public static void drawTexturedRectBatched(DrawContext drawContext, @Nonnull GpuTextureView gpuTextureView, int x, int y, int u, int v, int width, int height)
     {
-        drawTexturedRectBatched(x, y, u, v, width, height, 0, buffer);
+        drawTexturedRectBatched(drawContext, gpuTextureView, x, y, u, v, width, height, 0, -1);
     }
 
-    public static void drawTexturedRectBatched(int x, int y, int u, int v, int width, int height, float zLevel, BufferBuilder buffer)
+    public static void drawTexturedRectBatched(DrawContext drawContext, @Nonnull GpuTextureView gpuTextureView, int x, int y, int u, int v, int width, int height, int argb)
     {
-        float pixelWidth = 0.00390625F;
-
-        buffer.vertex(x           , y + height, zLevel).texture( u          * pixelWidth, (v + height) * pixelWidth);
-        buffer.vertex(x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth);
-        buffer.vertex(x + width, y            , zLevel).texture((u + width) * pixelWidth,  v           * pixelWidth);
-        buffer.vertex(x           , y            , zLevel).texture( u          * pixelWidth,  v           * pixelWidth);
+        drawTexturedRectBatched(drawContext, gpuTextureView, x, y, u, v, width, height, 0, argb);
     }
 
-    public static void drawHoverText(int x, int y, List<String> textLines, DrawContext drawContext)
+    public static void drawTexturedRectBatched(DrawContext drawContext, @Nonnull GpuTextureView gpuTextureView, int x, int y, int u, int v, int width, int height, float zLevel, int argb)
     {
-        MinecraftClient mc = mc();
+        addSimpleElement(drawContext,
+                         new MaLiLibTexturedRectGuiElement(
+                                 RenderPipelines.GUI_TEXTURED,
+                                 TextureSetup.withoutGlTexture(gpuTextureView),
+                                 new Matrix3x2f(drawContext.getMatrices()),
+                                 x, y, u, v,
+                                 width, height, argb,
+                                 peekLastScissor(drawContext))
+        );
+    }
 
+    public static void drawHoverText(DrawContext drawContext, int x, int y, List<String> textLines)
+    {
         if (textLines.isEmpty() == false && GuiUtils.getCurrentScreen() != null)
         {
-            RenderSystem.enableDepthTest();
-            TextRenderer font = mc.textRenderer;
+            TextRenderer font = mc().textRenderer;
             int maxLineLength = 0;
             int maxWidth = GuiUtils.getCurrentScreen().width;
             List<String> linesNew = new ArrayList<>();
@@ -389,67 +683,63 @@ public class RenderUtils
                 textStartX = Math.max(2, maxWidth - maxLineLength - 8);
             }
 
-            //drawTexturedRect(GuiBase.BG_TEXTURE, x, y, 0, 0, maxLineLength, maxWidth, drawContext);
-
-            drawContext.getMatrices().push();
-            drawContext.getMatrices().translate(0, 0, 300);
-            //RenderSystem.applyModelViewMatrix();
+            drawContext.getMatrices().pushMatrix();
+            drawContext.getMatrices().translate(0, 0);
 
             float zLevel = (float) 300;
             int borderColor = 0xF0100010;
-            drawGradientRect(textStartX - 3, textStartY - 4, textStartX + maxLineLength + 3, textStartY - 3, zLevel, borderColor, borderColor);
-            drawGradientRect(textStartX - 3, textStartY + textHeight + 3, textStartX + maxLineLength + 3, textStartY + textHeight + 4, zLevel, borderColor, borderColor);
-            drawGradientRect(textStartX - 3, textStartY - 3, textStartX + maxLineLength + 3, textStartY + textHeight + 3, zLevel, borderColor, borderColor);
-            drawGradientRect(textStartX - 4, textStartY - 3, textStartX - 3, textStartY + textHeight + 3, zLevel, borderColor, borderColor);
-            drawGradientRect(textStartX + maxLineLength + 3, textStartY - 3, textStartX + maxLineLength + 4, textStartY + textHeight + 3, zLevel, borderColor, borderColor);
+            drawGradientRectBatched(drawContext, textStartX - 3, textStartY - 4, textStartX + maxLineLength + 3, textStartY - 3, borderColor, borderColor);
+            drawGradientRectBatched(drawContext, textStartX - 3, textStartY + textHeight + 3, textStartX + maxLineLength + 3, textStartY + textHeight + 4, borderColor, borderColor);
+            drawGradientRectBatched(drawContext, textStartX - 3, textStartY - 3, textStartX + maxLineLength + 3, textStartY + textHeight + 3, borderColor, borderColor);
+            drawGradientRectBatched(drawContext, textStartX - 4, textStartY - 3, textStartX - 3, textStartY + textHeight + 3, borderColor, borderColor);
+            drawGradientRectBatched(drawContext, textStartX + maxLineLength + 3, textStartY - 3, textStartX + maxLineLength + 4, textStartY + textHeight + 3, borderColor, borderColor);
 
             int fillColor1 = 0x505000FF;
             int fillColor2 = 0x5028007F;
-            drawGradientRect(textStartX - 3, textStartY - 3 + 1, textStartX - 3 + 1, textStartY + textHeight + 3 - 1, zLevel, fillColor1, fillColor2);
-            drawGradientRect(textStartX + maxLineLength + 2, textStartY - 3 + 1, textStartX + maxLineLength + 3, textStartY + textHeight + 3 - 1, zLevel, fillColor1, fillColor2);
-            drawGradientRect(textStartX - 3, textStartY - 3, textStartX + maxLineLength + 3, textStartY - 3 + 1, zLevel, fillColor1, fillColor1);
-            drawGradientRect(textStartX - 3, textStartY + textHeight + 2, textStartX + maxLineLength + 3, textStartY + textHeight + 3, zLevel, fillColor2, fillColor2);
+            drawGradientRectBatched(drawContext, textStartX - 3, textStartY - 3 + 1, textStartX - 3 + 1, textStartY + textHeight + 3 - 1, fillColor1, fillColor2);
+            drawGradientRectBatched(drawContext, textStartX + maxLineLength + 2, textStartY - 3 + 1, textStartX + maxLineLength + 3, textStartY + textHeight + 3 - 1, fillColor1, fillColor2);
+            drawGradientRectBatched(drawContext, textStartX - 3, textStartY - 3, textStartX + maxLineLength + 3, textStartY - 3 + 1, fillColor1, fillColor1);
+            drawGradientRectBatched(drawContext, textStartX - 3, textStartY + textHeight + 2, textStartX + maxLineLength + 3, textStartY + textHeight + 3, fillColor2, fillColor2);
 
             for (int i = 0; i < textLines.size(); ++i)
             {
                 String str = textLines.get(i);
-
                 drawContext.drawText(font, str, textStartX, textStartY, 0xFFFFFFFF, false);
-
                 textStartY += lineHeight;
             }
 
-            forceDraw(drawContext);
-            drawContext.getMatrices().pop();
-            //RenderSystem.applyModelViewMatrix();
-
-            //RenderSystem.enableDepthTest();
-            //enableDiffuseLightingGui3D();
+            drawContext.getMatrices().popMatrix();
         }
     }
 
+    public static void drawGradientRectBatched(DrawContext drawContext, float left, float top, float right, float bottom, int startColor, int endColor)
+    {
+        addSimpleElement(drawContext, new MaLiLibGradientRectGuiElement(
+                RenderPipelines.GUI,
+                TextureSetup.empty(),
+                new Matrix3x2f(drawContext.getMatrices()),
+                left, top, right, bottom,
+                startColor, endColor,
+                peekLastScissor(drawContext))
+        );
+    }
+
+    @Deprecated
     public static void drawGradientRect(float left, float top, float right, float bottom, float zLevel, int startColor, int endColor)
     {
         int sa = (startColor >> 24 & 0xFF);
         int sr = (startColor >> 16 & 0xFF);
-        int sg = (startColor >>  8 & 0xFF);
+        int sg = (startColor >> 8 & 0xFF);
         int sb = (startColor & 0xFF);
 
         int ea = (endColor >> 24 & 0xFF);
         int er = (endColor >> 16 & 0xFF);
-        int eg = (endColor >>  8 & 0xFF);
+        int eg = (endColor >> 8 & 0xFF);
         int eb = (endColor & 0xFF);
 
-        setupBlend();
-        //RenderSystem.enableBlend();
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-        //RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        //RenderSystem.applyModelViewMatrix();
+        RenderContext ctx = new RenderContext(() -> "malilib:drawGradientRect", MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL);
+        BufferBuilder buffer = ctx.getBuilder();
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        BuiltBuffer builtBuffer;
-        
         buffer.vertex(right, top, zLevel).color(sr, sg, sb, sa);
         buffer.vertex(left, top, zLevel).color(sr, sg, sb, sa);
         buffer.vertex(left, bottom, zLevel).color(er, eg, eb, ea);
@@ -457,42 +747,51 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData, false);
+                meshData.close();
+            }
+
+            ctx.close();
         }
-        catch (Exception ignored) { }
-
-        RenderSystem.disableBlend();
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("drawGradientRect(): Draw Exception; {}", err.getMessage());
+        }
     }
 
-    public static void drawCenteredString(int x, int y, int color, String text, DrawContext drawContext)
+    public static void drawCenteredString(DrawContext drawContext, int x, int y, int color, String text)
     {
-        TextRenderer textRenderer = mc().textRenderer;
-        drawContext.drawCenteredTextWithShadow(textRenderer, text, x, y, color);
-        //tryDraw(drawContext);
+        drawContext.drawCenteredTextWithShadow(mc().textRenderer, text, x, y, color);
     }
 
-    public static void drawHorizontalLine(int x, int y, int width, int color)
+    public static void drawHorizontalLine(DrawContext drawContext, int x, int y, int width, int color)
     {
-        drawRect(x, y, width, 1, color);
+        drawRect(drawContext, x, y, width, 1, color);
     }
 
-    public static void drawVerticalLine(int x, int y, int height, int color)
+    public static void drawVerticalLine(DrawContext drawContext, int x, int y, int height, int color)
     {
-        drawRect(x, y, 1, height, color);
+        drawRect(drawContext, x, y, 1, height, color);
     }
 
-    public static void renderSprite(int x, int y, int width, int height, Identifier atlas, Identifier texture, DrawContext drawContext)
+    public static void renderSprite(DrawContext drawContext, Identifier atlas, Identifier texture, int x, int y, int width, int height)
     {
         if (texture != null)
         {
             Sprite sprite = mc().getSpriteAtlas(atlas).apply(texture);
-            drawContext.drawSpriteStretched(RenderLayer::getGuiTextured, sprite, x, y, width, height, -1);
+
+            if (sprite != null)
+            {
+                drawContext.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, -1);
+            }
         }
     }
 
-    public static void renderText(int x, int y, int color, String text, DrawContext drawContext)
+    public static void renderText(DrawContext drawContext, int x, int y, int color, String text)
     {
         String[] parts = text.split("\\\\n");
         TextRenderer textRenderer = mc().textRenderer;
@@ -500,13 +799,11 @@ public class RenderUtils
         for (String line : parts)
         {
             drawContext.drawText(textRenderer, line, x, y, color, true);
-            //tryDraw(drawContext);
-
             y += textRenderer.fontHeight + 1;
         }
     }
 
-    public static void renderText(int x, int y, int color, List<String> lines, DrawContext drawContext)
+    public static void renderText(DrawContext drawContext, int x, int y, int color, List<String> lines)
     {
         if (lines.isEmpty() == false)
         {
@@ -515,16 +812,26 @@ public class RenderUtils
             for (String line : lines)
             {
                 drawContext.drawText(textRenderer, line, x, y, color, false);
-                //tryDraw(drawContext);
-
                 y += textRenderer.fontHeight + 2;
             }
         }
     }
 
-    public static int renderText(int xOff, int yOff, double scale, int textColor, int bgColor,
-            HudAlignment alignment, boolean useBackground, boolean useShadow, List<String> lines,
-            DrawContext drawContext)
+    public static int renderText(DrawContext drawContext, int xOff, int yOff, double scale,
+                                 int textColor, int bgColor, HudAlignment alignment,
+                                 boolean useBackground, boolean useShadow,
+                                 List<String> lines)
+    {
+        return renderText(drawContext, xOff, yOff, scale,
+                          textColor, bgColor, alignment,
+                          useBackground, useShadow, true,
+                          lines);
+    }
+
+    public static int renderText(DrawContext drawContext, int xOff, int yOff, double scale,
+                                 int textColor, int bgColor, HudAlignment alignment,
+                                 boolean useBackground, boolean useShadow, boolean useStatusShift,
+                                 List<String> lines)
     {
         TextRenderer fontRenderer = mc().textRenderer;
         final int scaledWidth = GuiUtils.getScaledWindowWidth();
@@ -538,30 +845,30 @@ public class RenderUtils
             return 0;
         }
 
-        // RenderSystem's 'modelViewStack' was changed to a Matrix4fStack method
         //Matrix4fStack global4fStack = RenderSystem.getModelViewStack();
         boolean scaled = scale != 1.0;
 
         if (scaled)
         {
-            if (scale != 0)
-            {
-                xOff = (int) (xOff * scale);
-                yOff = (int) (yOff * scale);
-            }
+//            if (scale != 0)
+//            {
+//                xOff = (int) (xOff * scale);
+//                yOff = (int) (yOff * scale);
+//            }
 
-            drawContext.getMatrices().push();
-            drawContext.getMatrices().scale((float) scale, (float) scale, 1.0f);
-            //global4fStack.pushMatrix();
-            //global4fStack.scale((float) scale, (float) scale, 1.0f);
-            //RenderSystem.applyModelViewMatrix();
+            drawContext.getMatrices().pushMatrix();
+            drawContext.getMatrices().scale((float) scale, (float) scale);      // z = 1.0f
         }
 
         double posX = xOff + bgMargin;
         double posY = yOff + bgMargin;
 
         posY = getHudPosY((int) posY, yOff, contentHeight, scale, alignment);
-        posY += getHudOffsetForPotions(alignment, scale, mc().player);
+
+        if (useStatusShift)
+        {
+            posY += getHudOffsetForPotions(alignment, scale, mc().player);
+        }
 
         for (String line : lines)
         {
@@ -585,18 +892,16 @@ public class RenderUtils
 
             if (useBackground)
             {
-                drawRect(x - bgMargin, y - bgMargin, width + bgMargin, bgMargin + fontRenderer.fontHeight, bgColor, 0f, (float) scale);
+//                drawRect(drawContext, x - bgMargin, y - bgMargin, width + bgMargin, bgMargin + fontRenderer.fontHeight, bgColor, (float) (scale * 2));
+                drawRect(drawContext, x - bgMargin, y - bgMargin, width + bgMargin, bgMargin + fontRenderer.fontHeight, bgColor);
             }
 
             drawContext.drawText(fontRenderer, line, x, y, textColor, useShadow);
-            forceDraw(drawContext);
         }
 
         if (scaled)
         {
-            //global4fStack.popMatrix();
-            drawContext.getMatrices().pop();
-            //RenderSystem.applyModelViewMatrix();
+            drawContext.getMatrices().popMatrix();
         }
 
         return contentHeight + bgMargin * 2;
@@ -678,7 +983,8 @@ public class RenderUtils
     /**
      * Assumes a BufferBuilder in GL_QUADS mode has been initialized
      */
-    public static void drawBlockBoundingBoxSidesBatchedQuads(BlockPos pos, Color4f color, double expand, BufferBuilder buffer)
+    public static void drawBlockBoundingBoxSidesBatchedQuads(BlockPos pos, Color4f color, double expand,
+                                                             BufferBuilder buffer)
     {
         float minX = (float) (pos.getX() - expand);
         float minY = (float) (pos.getY() - expand);
@@ -690,24 +996,43 @@ public class RenderUtils
         drawBoxAllSidesBatchedQuads(minX, minY, minZ, maxX, maxY, maxZ, color, buffer);
     }
 
+    public static void drawBlockBoundingBoxSidesBatchedQuads(BlockPos pos, Vec3d cameraPos, Color4f color, double expand,
+                                                             BufferBuilder buffer)
+    {
+        float minX = (float) (pos.getX() - cameraPos.x - expand);
+        float minY = (float) (pos.getY() - cameraPos.y - expand);
+        float minZ = (float) (pos.getZ() - cameraPos.z - expand);
+        float maxX = (float) (pos.getX() - cameraPos.x + expand + 1);
+        float maxY = (float) (pos.getY() - cameraPos.y + expand + 1);
+        float maxZ = (float) (pos.getZ() - cameraPos.z + expand + 1);
+
+        RenderUtils.drawBoxAllSidesBatchedQuads(minX, minY, minZ, maxX, maxY, maxZ, color, buffer);
+    }
+
     /**
      * Assumes a BufferBuilder in GL_LINES mode has been initialized
      */
-    public static void drawBlockBoundingBoxOutlinesBatchedLines(BlockPos pos, Color4f color, double expand, BufferBuilder buffer)
+    public static void drawBlockBoundingBoxOutlinesBatchedLines(BlockPos pos, Color4f color, double expand,
+//                                                                BufferBuilder buffer, MatrixStack.Entry e)
+                                                                BufferBuilder buffer)
     {
         drawBlockBoundingBoxOutlinesBatchedLines(pos, Vec3d.ZERO, color, expand, buffer);
+//        drawBlockBoundingBoxOutlinesBatchedLines(pos, Vec3d.ZERO, color, expand, buffer, e);
     }
 
     /**
      * Assumes a BufferBuilder in GL_LINES mode has been initialized.
      * The cameraPos value will be subtracted from the absolute coordinate values of the passed in BlockPos.
+     *
      * @param pos
      * @param cameraPos
      * @param color
      * @param expand
      * @param buffer
      */
-    public static void drawBlockBoundingBoxOutlinesBatchedLines(BlockPos pos, Vec3d cameraPos, Color4f color, double expand, BufferBuilder buffer)
+    public static void drawBlockBoundingBoxOutlinesBatchedLines(BlockPos pos, Vec3d cameraPos, Color4f color, double expand,
+//                                                                BufferBuilder buffer, MatrixStack.Entry e)
+                                                                BufferBuilder buffer)
     {
         float minX = (float) (pos.getX() - expand - cameraPos.x);
         float minY = (float) (pos.getY() - expand - cameraPos.y);
@@ -717,13 +1042,14 @@ public class RenderUtils
         float maxZ = (float) (pos.getZ() + expand - cameraPos.z + 1);
 
         drawBoxAllEdgesBatchedLines(minX, minY, minZ, maxX, maxY, maxZ, color, buffer);
+//        drawBoxAllEdgesBatchedLines(minX, minY, minZ, maxX, maxY, maxZ, color, buffer, e);
     }
 
     /**
      * Assumes a BufferBuilder in GL_QUADS mode has been initialized
      */
     public static void drawBoxAllSidesBatchedQuads(float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
-            Color4f color, BufferBuilder buffer)
+                                                   Color4f color, BufferBuilder buffer)
     {
         drawBoxHorizontalSidesBatchedQuads(minX, minY, minZ, maxX, maxY, maxZ, color, buffer);
         drawBoxTopBatchedQuads(minX, minZ, maxX, maxY, maxZ, color, buffer);
@@ -733,6 +1059,7 @@ public class RenderUtils
     /**
      * Draws a box with outlines around the given corner positions.
      * Takes in buffers initialized for GL_QUADS and GL_LINES modes.
+     *
      * @param posMin
      * @param posMax
      * @param colorLines
@@ -740,15 +1067,19 @@ public class RenderUtils
      * @param bufferQuads
      * @param bufferLines
      */
-    public static void drawBoxWithEdgesBatched(BlockPos posMin, BlockPos posMax, Color4f colorLines, Color4f colorSides, BufferBuilder bufferQuads, BufferBuilder bufferLines)
+    public static void drawBoxWithEdgesBatched(BlockPos posMin, BlockPos posMax, Color4f colorLines, Color4f colorSides,
+//                                               BufferBuilder bufferQuads, BufferBuilder bufferLines, MatrixStack matrices)
+                                               BufferBuilder bufferQuads, BufferBuilder bufferLines)
     {
         drawBoxWithEdgesBatched(posMin, posMax, Vec3d.ZERO, colorLines, colorSides, bufferQuads, bufferLines);
+//        drawBoxWithEdgesBatched(posMin, posMax, Vec3d.ZERO, colorLines, colorSides, bufferQuads, bufferLines, matrices);
     }
 
     /**
      * Draws a box with outlines around the given corner positions.
      * Takes in buffers initialized for GL_QUADS and GL_LINES modes.
      * The cameraPos value will be subtracted from the absolute coordinate values of the passed in block positions.
+     *
      * @param posMin
      * @param posMax
      * @param cameraPos
@@ -757,7 +1088,9 @@ public class RenderUtils
      * @param bufferQuads
      * @param bufferLines
      */
-    public static void drawBoxWithEdgesBatched(BlockPos posMin, BlockPos posMax, Vec3d cameraPos, Color4f colorLines, Color4f colorSides, BufferBuilder bufferQuads, BufferBuilder bufferLines)
+    public static void drawBoxWithEdgesBatched(BlockPos posMin, BlockPos posMax, Vec3d cameraPos, Color4f colorLines, Color4f colorSides,
+//                                               BufferBuilder bufferQuads, BufferBuilder bufferLines, MatrixStack matrices)
+                                               BufferBuilder bufferQuads, BufferBuilder bufferLines)
     {
         final float x1 = (float) (posMin.getX() - cameraPos.x);
         final float y1 = (float) (posMin.getY() - cameraPos.y);
@@ -766,15 +1099,19 @@ public class RenderUtils
         final float y2 = (float) (posMax.getY() + 1 - cameraPos.y);
         final float z2 = (float) (posMax.getZ() + 1 - cameraPos.z);
 
-        fi.dy.masa.malilib.render.RenderUtils.drawBoxAllSidesBatchedQuads(x1, y1, z1, x2, y2, z2, colorSides, bufferQuads);
-        fi.dy.masa.malilib.render.RenderUtils.drawBoxAllEdgesBatchedLines(x1, y1, z1, x2, y2, z2, colorLines, bufferLines);
+//        MatrixStack.Entry e = matrices.peek();
+
+        drawBoxAllSidesBatchedQuads(x1, y1, z1, x2, y2, z2, colorSides, bufferQuads);
+        drawBoxAllEdgesBatchedLines(x1, y1, z1, x2, y2, z2, colorLines, bufferLines);
+
+//        drawBoxAllEdgesBatchedLines(x1, y1, z1, x2, y2, z2, colorLines, bufferLines, e);
     }
 
     /**
      * Assumes a BufferBuilder in GL_QUADS mode has been initialized
      */
     public static void drawBoxHorizontalSidesBatchedQuads(float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
-            Color4f color, BufferBuilder buffer)
+                                                          Color4f color, BufferBuilder buffer)
     {
         // West side
         buffer.vertex(minX, minY, minZ).color(color.r, color.g, color.b, color.a);
@@ -829,7 +1166,8 @@ public class RenderUtils
      * Assumes a BufferBuilder in GL_LINES mode has been initialized
      */
     public static void drawBoxAllEdgesBatchedLines(float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
-            Color4f color, BufferBuilder buffer)
+//                                                   Color4f color, BufferBuilder buffer, MatrixStack.Entry e)
+                                                   Color4f color, BufferBuilder buffer)
     {
         // West side
         buffer.vertex(minX, minY, minZ).color(color.r, color.g, color.b, color.a);
@@ -872,7 +1210,25 @@ public class RenderUtils
         buffer.vertex(minX, maxY, maxZ).color(color.r, color.g, color.b, color.a);
     }
 
-    public static void drawBox(IntBoundingBox bb, Vec3d cameraPos, Color4f color, BufferBuilder bufferQuads, BufferBuilder bufferLines)
+    public static void drawBox(IntBoundingBox bb, Vec3d cameraPos, Color4f color,
+//                               BufferBuilder bufferQuads, BufferBuilder bufferLines, MatrixStack matrices)
+                               BufferBuilder bufferQuads, BufferBuilder bufferLines)
+    {
+        float minX = (float) (bb.minX - cameraPos.x);
+        float minY = (float) (bb.minY - cameraPos.y);
+        float minZ = (float) (bb.minZ - cameraPos.z);
+        float maxX = (float) (bb.maxX + 1 - cameraPos.x);
+        float maxY = (float) (bb.maxY + 1 - cameraPos.y);
+        float maxZ = (float) (bb.maxZ + 1 - cameraPos.z);
+
+//        MatrixStack.Entry e = matrices.peek();
+        drawBoxAllSidesBatchedQuads(minX, minY, minZ, maxX, maxY, maxZ, color, bufferQuads);
+        drawBoxAllEdgesBatchedLines(minX, minY, minZ, maxX, maxY, maxZ, color, bufferLines);
+//        drawBoxAllEdgesBatchedLines(minX, minY, minZ, maxX, maxY, maxZ, color, bufferLines, e);
+    }
+
+    public static void drawBoxNoOutlines(IntBoundingBox bb, Vec3d cameraPos, Color4f color,
+                                         BufferBuilder bufferQuads)
     {
         float minX = (float) (bb.minX - cameraPos.x);
         float minY = (float) (bb.minY - cameraPos.y);
@@ -882,12 +1238,12 @@ public class RenderUtils
         float maxZ = (float) (bb.maxZ + 1 - cameraPos.z);
 
         drawBoxAllSidesBatchedQuads(minX, minY, minZ, maxX, maxY, maxZ, color, bufferQuads);
-        drawBoxAllEdgesBatchedLines(minX, minY, minZ, maxX, maxY, maxZ, color, bufferLines);
     }
 
     /**
      * Renders a text plate/billboard, similar to the player name plate.<br>
      * The plate will always face towards the viewer.
+     *
      * @param text
      * @param x
      * @param y
@@ -907,7 +1263,7 @@ public class RenderUtils
     public static void drawTextPlate(List<String> text, double x, double y, double z, float yaw, float pitch,
                                      float scale, int textColor, int bgColor, boolean disableDepth)
     {
-        Vec3d cameraPos = mc().gameRenderer.getCamera().getPos();
+        Vec3d cameraPos = camPos();
         double cx = cameraPos.x;
         double cy = cameraPos.y;
         double cz = cameraPos.z;
@@ -923,16 +1279,12 @@ public class RenderUtils
 
         global4fStack.scale((-scale), (-scale), scale);
         //RenderSystem.applyModelViewMatrix();
-        RenderSystem.disableCull();
 
-        setupBlend();
-        //RenderSystem.enableBlend();
+        culling(false);
+        blend(true);
 
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-        //RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        BuiltBuffer builtBuffer;
+        RenderContext ctx = new RenderContext(() -> "malilib:drawTextPlate", MaLiLibPipelines.POSITION_COLOR_MASA);
+        BufferBuilder buffer = ctx.getBuilder();
         int maxLineLen = 0;
 
         for (String line : text)
@@ -944,13 +1296,13 @@ public class RenderUtils
         int textHeight = textRenderer.fontHeight * text.size() - 1;
         int bga = ((bgColor >>> 24) & 0xFF);
         int bgr = ((bgColor >>> 16) & 0xFF);
-        int bgg = ((bgColor >>>  8) & 0xFF);
-        int bgb = (bgColor          & 0xFF);
+        int bgg = ((bgColor >>> 8) & 0xFF);
+        int bgb = (bgColor & 0xFF);
 
         if (disableDepth)
         {
-            RenderSystem.depthMask(false);
-            RenderSystem.disableDepthTest();
+            //RenderSystem.depthMask(false);
+            depthTest(false);
         }
 
         buffer.vertex((float) (-strLenHalf - 1), (float) -1, 0.0F).color(bgr, bgg, bgb, bga);
@@ -960,61 +1312,73 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData, false);
+                meshData.close();
+            }
+
+            ctx.close();
         }
-        catch (Exception ignored) { }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("drawTextPlate(): Draw Exception; {}", err.getMessage());
+        }
 
         int textY = 0;
 
         // translate the text a bit infront of the background
         if (disableDepth == false)
         {
-            RenderSystem.enablePolygonOffset();
-            RenderSystem.polygonOffset(-0.6f, -1.2f);
+            polygonOffset(true);
+            polygonOffset(-0.6f, -1.2f);
         }
 
         Matrix4f modelMatrix = new Matrix4f();
         modelMatrix.identity();
 
+        BufferAllocator allocator = new BufferAllocator(RenderLayer.DEFAULT_BUFFER_SIZE);
+
         for (String line : text)
         {
             if (disableDepth)
             {
-                RenderSystem.depthMask(false);
-                RenderSystem.disableDepthTest();
-                VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(new BufferAllocator(RenderLayer.DEFAULT_BUFFER_SIZE));
+                //depthMask(false);
+                depthTest(false);
+                VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
                 textRenderer.draw(line, -strLenHalf, textY, 0x20000000 | (textColor & 0xFFFFFF), false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
                 immediate.draw();
-                RenderSystem.enableDepthTest();
-                RenderSystem.depthMask(true);
+                depthTest(true);
+                //depthMask(true);
             }
 
-            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(new BufferAllocator(RenderLayer.DEFAULT_BUFFER_SIZE));
+            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
             textRenderer.draw(line, -strLenHalf, textY, textColor, false, modelMatrix, immediate, TextRenderer.TextLayerType.SEE_THROUGH, 0, 15728880);
             immediate.draw();
             textY += textRenderer.fontHeight;
         }
 
+        allocator.close();
+
         if (disableDepth == false)
         {
-            RenderSystem.polygonOffset(0f, 0f);
-            RenderSystem.disablePolygonOffset();
+            polygonOffset(0f, 0f);
+            polygonOffset(false);
         }
 
-        color(1f, 1f, 1f, 1f);
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
+//        color(1f, 1f, 1f, 1f);
+        culling(true);
         global4fStack.popMatrix();
     }
 
     public static void renderBlockTargetingOverlay(Entity entity, BlockPos pos, Direction side, Vec3d hitVec,
-            Color4f color, Matrix4f posMatrix, MinecraftClient mc)
+                                                   Color4f color, Matrix4f posMatrix)
     {
         Direction playerFacing = entity.getHorizontalFacing();
-        HitPart part = PositionUtils.getHitPart(side, playerFacing, pos, hitVec);
-        Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
+        PositionUtils.HitPart part = PositionUtils.getHitPart(side, playerFacing, pos, hitVec);
+        Vec3d cameraPos = camPos();
 
         double x = (pos.getX() + 0.5d - cameraPos.x);
         double y = (pos.getY() + 0.5d - cameraPos.y);
@@ -1023,14 +1387,10 @@ public class RenderUtils
         Matrix4fStack global4fStack = RenderSystem.getModelViewStack();
         global4fStack.pushMatrix();
         blockTargetingOverlayTranslations(x, y, z, side, playerFacing, global4fStack);
-        //RenderSystem.applyModelViewMatrix();
 
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-        //RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        BuiltBuffer builtBuffer;
+        // Target "Side" -->
+        RenderContext ctx = new RenderContext(() -> "malilib:renderBlockTargetingOverlay Side", MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL);
+        BufferBuilder buffer = ctx.getBuilder();
 
         int quadAlpha = (int) (0.18f * 255f);
         int hr = (int) (color.r * 255f);
@@ -1082,16 +1442,26 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData, false);
+                meshData.close();
+            }
+
+            ctx.reset();
         }
-        catch (Exception ignored) { }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderBlockTargetingOverlay():1: Draw Exception; {}", err.getMessage());
+        }
 
-        // FIXME: line width doesn't work currently
-        RenderSystem.lineWidth(1.6f);
+        int wireColor = -1;
 
-        buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        // Target "Center" -->
+        // MaLiLibPipelines.DEBUG_LINE_STRIP_MASA_SIMPLE_NO_DEPTH_NO_CULL
+        buffer = ctx.start(() -> "malilib:renderBlockTargetingOverlay/center", MaLiLibPipelines.DEBUG_LINE_STRIP_MASA_SIMPLE_NO_DEPTH_NO_CULL);
 
         // Middle small rectangle
         buffer.vertex((float) (x - 0.25), (float) (y - 0.25), (float) z).color(c, c, c, c);
@@ -1102,13 +1472,27 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
-        }
-        catch (Exception ignored) { }
+            BuiltBuffer meshData = buffer.endNullable();
 
-        buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+            if (meshData != null)
+            {
+                ctx.color(wireColor);
+                ctx.lineWidth(1.6f);
+                ctx.draw(meshData, false, true);
+                meshData.close();
+            }
+
+            ctx.reset();
+        }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderBlockTargetingOverlay():2: Draw Exception; {}", err.getMessage());
+        }
+
+        // Target "Edges" -->
+        // MaLiLibPipelines.LINES_TRANSLUCENT_NO_DEPTH_NO_CULL
+        buffer = ctx.start(() -> "malilib:renderBlockTargetingOverlay/edges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
+
         // Bottom left
         buffer.vertex((float) (x - 0.50), (float) (y - 0.50), (float) z).color(c, c, c, c);
         buffer.vertex((float) (x - 0.25), (float) (y - 0.25), (float) z).color(c, c, c, c);
@@ -1127,21 +1511,31 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.color(wireColor);
+                ctx.lineWidth(1.6f);
+                ctx.draw(meshData, false, true);
+                meshData.close();
+            }
+
+            ctx.close();
         }
-        catch (Exception ignored) { }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderBlockTargetingOverlay():3: Draw Exception; {}", err.getMessage());
+        }
 
         global4fStack.popMatrix();
-        //RenderSystem.applyModelViewMatrix();
     }
 
     public static void renderBlockTargetingOverlaySimple(Entity entity, BlockPos pos, Direction side,
-            Color4f color, Matrix4f posMatrix, MinecraftClient mc)
+                                                         Color4f color, Matrix4f posMatrix)
     {
         Direction playerFacing = entity.getHorizontalFacing();
-        Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
+        Vec3d cameraPos = camPos();
 
         double x = pos.getX() + 0.5d - cameraPos.x;
         double y = pos.getY() + 0.5d - cameraPos.y;
@@ -1151,13 +1545,9 @@ public class RenderUtils
         global4fStack.pushMatrix();
 
         blockTargetingOverlayTranslations(x, y, z, side, playerFacing, global4fStack);
-        //RenderSystem.applyModelViewMatrix();
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-        //RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        BuiltBuffer builtBuffer;
+        RenderContext ctx = new RenderContext(() -> "malilib:renderBlockTargetingOverlaySimple/quads", MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL);
+        BufferBuilder buffer = ctx.getBuilder();
 
         int a = (int) (color.a * 255f);
         int r = (int) (color.r * 255f);
@@ -1173,16 +1563,23 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.draw(meshData, false);
+                meshData.close();
+            }
+
+            ctx.reset();
         }
-        catch (Exception ignored) { }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderBlockTargetingOverlaySimple():1: Draw Exception; {}", err.getMessage());
+        }
 
-        // FIXME: line width doesn't work currently
-        RenderSystem.lineWidth(1.6f);
-
-        buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        // MaLiLibPipelines.DEBUG_LINE_STRIP_MASA_SIMPLE_NO_DEPTH_NO_CULL
+        buffer = ctx.start(() -> "malilib:renderBlockTargetingOverlaySimple/lines", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
 
         // Middle rectangle
         buffer.vertex((float) (x - 0.375), (float) (y - 0.375), (float) z).color(c, c, c, c);
@@ -1192,14 +1589,23 @@ public class RenderUtils
 
         try
         {
-            builtBuffer = buffer.end();
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-            builtBuffer.close();
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(1.6f);
+                ctx.draw(meshData, false, true);
+                meshData.close();
+            }
+
+            ctx.close();
         }
-        catch (Exception ignored) { }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderBlockTargetingOverlaySimple():2: Draw Exception; {}", err.getMessage());
+        }
 
         global4fStack.popMatrix();
-        //RenderSystem.applyModelViewMatrix();
     }
 
     /**
@@ -1207,7 +1613,7 @@ public class RenderUtils
      * (angle * 0.017453292F) --> easy fix with matrix4fRotateFix()
      */
     private static void blockTargetingOverlayTranslations(double x, double y, double z,
-            Direction side, Direction playerFacing, Matrix4fStack matrix4fStack)
+                                                          Direction side, Direction playerFacing, Matrix4fStack matrix4fStack)
     {
         matrix4fStack.translate((float) x, (float) y, (float) z);
 
@@ -1237,17 +1643,15 @@ public class RenderUtils
         matrix4fStack.translate((float) (-x), (float) (-y), (float) ((-z) + 0.510));
     }
 
-    public static void renderMapPreview(ItemStack stack, int x, int y, int dimensions, DrawContext drawContext)
+    public static void renderMapPreview(DrawContext drawContext, ItemStack stack, int x, int y, int dimensions)
     {
-        renderMapPreview(stack, x, y, dimensions, true, drawContext);
+        renderMapPreview(drawContext, stack, x, y, dimensions, true);
     }
 
-    public static void renderMapPreview(ItemStack stack, int x, int y, int dimensions, boolean requireShift, DrawContext drawContext)
+    public static void renderMapPreview(DrawContext drawContext, ItemStack stack, int x, int y, int dimensions, boolean requireShift)
     {
         if (stack.getItem() instanceof FilledMapItem && (!requireShift || GuiBase.isShiftDown()))
         {
-            color(1f, 1f, 1f, 1f);
-
             int y1 = y - dimensions - 20;
             int y2 = y1 + dimensions;
             int x1 = x + 8;
@@ -1260,66 +1664,48 @@ public class RenderUtils
             MapIdComponent mapId = data.get(DataComponentTypes.MAP_ID);
 
             Identifier bgTexture = mapState == null ? TEXTURE_MAP_BACKGROUND : TEXTURE_MAP_BACKGROUND_CHECKERBOARD;
-            //bindTexture(bgTexture);
-            VertexConsumer vertex = bindTexture(bgTexture, drawContext);
-            Matrix4f matrix4f = drawContext.getMatrices().peek().getPositionMatrix();
-            //setupBlend();
+            GpuTextureView gpuTextureView = bindGpuTextureView(bgTexture);
 
-            vertex.vertex(matrix4f, x1, y2, z).color(-1).texture(0.0f, 1.0f).light(uv);
-            vertex.vertex(matrix4f, x2, y2, z).color(-1).texture(1.0f, 1.0f).light(uv);
-            vertex.vertex(matrix4f, x2, y1, z).color(-1).texture(1.0f, 0.0f).light(uv);
-            vertex.vertex(matrix4f, x1, y1, z).color(-1).texture(0.0f, 0.0f).light(uv);
-
-            forceDraw(drawContext);
-
-            //RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR);
-            //RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-            //RenderSystem.applyModelViewMatrix();
-            /*
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-            BuiltBuffer builtBuffer;
-
-            buffer.vertex(x1, y2, z).texture(0.0f, 1.0f);
-            buffer.vertex(x2, y2, z).texture(1.0f, 1.0f);
-            buffer.vertex(x2, y1, z).texture(1.0f, 0.0f);
-            buffer.vertex(x1, y1, z).texture(0.0f, 0.0f);
-
-            try
+            if (gpuTextureView == null)
             {
-                builtBuffer = buffer.end();
-                BufferRenderer.drawWithGlobalProgram(builtBuffer);
-                builtBuffer.close();
+                MaLiLib.LOGGER.error("renderMapPreview(): Failed to bind GpuTexture!");
+                return;
             }
-            catch (Exception ignored) { }
 
-            RenderSystem.disableBlend();
+            addSimpleElement(drawContext,
+                    new MaLiLibLightTexturedGuiElement(
+                            RenderPipelines.GUI_TEXTURED,
+                            TextureSetup.withoutGlTexture(gpuTextureView),
+                            new Matrix3x2f(drawContext.getMatrices()),
+                            x1, y1, x2, y2,
+                            0.0f, 1.0f, 0.0f, 1.0f,
+                            -1, uv,
+                            peekLastScissor(drawContext))
+            );
 
-             */
-
-            if (mapState != null)
+            if (mapId != null && mapState != null)
             {
                 x1 += 8;
                 y1 += 8;
-                z = 310;
-                VertexConsumerProvider.Immediate consumer = VertexConsumerProvider.immediate(new BufferAllocator(RenderLayer.DEFAULT_BUFFER_SIZE));
+//                z = 310;
+
+//                drawContext.enableScissor(x1, y1, x1 + z, y1 + z);
                 double scale = (double) (dimensions - 16) / 128.0D;
 
-                MatrixStack matrixStack = new MatrixStack();
-                matrixStack.push();
-                matrixStack.translate(x1, y1, z);
-                matrixStack.scale((float) scale, (float) scale, 0);
+                drawContext.getMatrices().pushMatrix();
+                drawContext.getMatrices().translate(x1, y1);
+                drawContext.getMatrices().scale((float) scale, (float) scale);
 
                 MapRenderState mapRenderState = new MapRenderState();
                 mc().getMapRenderer().update(mapId, mapState, mapRenderState);
-                mc().getMapRenderer().draw(mapRenderState, matrixStack, consumer, false, uv);
-                consumer.draw();
-                matrixStack.pop();
+                drawContext.drawMap(mapRenderState);
+                drawContext.getMatrices().popMatrix();
+//                drawContext.disableScissor();
             }
         }
     }
 
-    public static void renderShulkerBoxPreview(ItemStack stack, int baseX, int baseY, boolean useBgColors, DrawContext drawContext)
+    public static void renderShulkerBoxPreview(DrawContext drawContext, ItemStack stack, int baseX, int baseY, boolean useBgColors)
     {
         DefaultedList<ItemStack> items;
 
@@ -1344,56 +1730,50 @@ public class RenderUtils
             int height = props.height + 18;
             int x = MathHelper.clamp(baseX + 8, 0, screenWidth - props.width);
             int y = MathHelper.clamp(baseY - height, 0, screenHeight - height);
-
-            // Mask items behind the shulker box display, trying to minimize the sharp corners
-            drawTexturedRect(GuiBase.BG_TEXTURE, x + 1, y + 1, 0, 0, props.width - 2, props.height - 2, drawContext);
+            int color;
 
             if (stack.getItem() instanceof BlockItem && ((BlockItem) stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
             {
-                setShulkerboxBackgroundTintColor((ShulkerBoxBlock) ((BlockItem) stack.getItem()).getBlock(), useBgColors);
+                color = setShulkerboxBackgroundTintColor((ShulkerBoxBlock) ((BlockItem) stack.getItem()).getBlock(), useBgColors);
             }
             else
             {
-                color(1f, 1f, 1f, 1f);
+                color = Colors.WHITE;
             }
-
-            disableDiffuseLighting();
 
             Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
             matrix4fStack.pushMatrix();
             matrix4fStack.translate(0, 0, 500);
-            //drawContext.getMatrices().push();
-            //drawContext.getMatrices().translate(0, 0, 500);
-            //RenderSystem.applyModelViewMatrix();
 
-            InventoryOverlay.renderInventoryBackground(type, x, y, props.slotsPerRow, props.totalSlots, mc());
-            color(1f, 1f, 1f, 1f);
-
-            enableDiffuseLightingGui3D();
+            InventoryOverlay.renderInventoryBackground(drawContext, type, x, y, props.slotsPerRow, props.totalSlots, color, mc());
+            color = Colors.WHITE;
 
             if (type == InventoryOverlay.InventoryRenderType.BREWING_STAND)
             {
-                InventoryOverlay.renderBrewerBackgroundSlots(inv, x, y, drawContext);
+                InventoryOverlay.renderBrewerBackgroundSlots(drawContext, inv, x, y);
             }
 
             if (type == InventoryOverlay.InventoryRenderType.CRAFTER && !nbt.isEmpty())
             {
                 lockedSlots = NbtBlockUtils.getDisabledSlotsFromNbt(nbt);
-                InventoryOverlay.renderInventoryStacks(type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, -1, lockedSlots, mc(), drawContext);
+                InventoryOverlay.renderInventoryStacks(drawContext, type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, -1, lockedSlots, mc());
             }
             else
             {
-                InventoryOverlay.renderInventoryStacks(type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, -1, mc(), drawContext);
+                InventoryOverlay.renderInventoryStacks(drawContext, type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, -1, mc());
             }
 
             matrix4fStack.popMatrix();
-            //drawContext.getMatrices().pop();
-            //forceDraw(drawContext);
-            //RenderSystem.applyModelViewMatrix();
         }
     }
 
-    public static void renderBundlePreview(ItemStack stack, int baseX, int baseY, boolean useBgColors, DrawContext drawContext)
+    public static void renderBundlePreview(DrawContext drawContext, ItemStack stack, int baseX, int baseY, boolean useBgColors)
+    {
+        // Default is 9 to make the default display the same as Shulker Boxes
+        renderBundlePreview(drawContext, stack, baseX, baseY, 9, useBgColors);
+    }
+
+    public static void renderBundlePreview(DrawContext drawContext, ItemStack stack, int baseX, int baseY, int slotsPerRow, boolean useBgColors)
     {
         DefaultedList<ItemStack> items;
 
@@ -1401,6 +1781,7 @@ public class RenderUtils
         {
             int count = InventoryUtils.bundleCountItems(stack);
             items = InventoryUtils.getBundleItems(stack, count);
+            slotsPerRow = slotsPerRow != 9 ? MathUtils.clamp(slotsPerRow, 6, 9) : 9;
 
             if (items.isEmpty())
             {
@@ -1409,7 +1790,7 @@ public class RenderUtils
 
             Inventory inv = InventoryUtils.getAsInventory(items);
             InventoryOverlay.InventoryRenderType type = InventoryOverlay.getInventoryType(stack);
-            InventoryOverlay.InventoryProperties props = InventoryOverlay.getInventoryPropsTemp(type, count);
+            InventoryOverlay.InventoryProperties props = InventoryOverlay.getInventoryPropsTemp(type, count, slotsPerRow);
 
             int screenWidth = GuiUtils.getScaledWindowWidth();
             int screenHeight = GuiUtils.getScaledWindowHeight();
@@ -1417,46 +1798,33 @@ public class RenderUtils
             int x = MathHelper.clamp(baseX + 8, 0, screenWidth - props.width);
             int y = MathHelper.clamp(baseY - height, 0, screenHeight - height);
 
-            // Mask items behind the shulker box display, trying to minimize the sharp corners
-            drawTexturedRect(GuiBase.BG_TEXTURE, x + 1, y + 1, 0, 0, props.width - 2, props.height - 2, drawContext);
-
-            setBundleBackgroundTintColor(stack, useBgColors);
-            disableDiffuseLighting();
+            int color = setBundleBackgroundTintColor(stack, useBgColors);
 
             Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
             matrix4fStack.pushMatrix();
             matrix4fStack.translate(0, 0, 500);
-            //drawContext.getMatrices().push();
-            //drawContext.getMatrices().translate(0, 0, 500);
-            //RenderSystem.applyModelViewMatrix();
 
-            InventoryOverlay.renderInventoryBackground(type, x, y, props.slotsPerRow, props.totalSlots, mc());
-            color(1f, 1f, 1f, 1f);
-
-            enableDiffuseLightingGui3D();
-
-            InventoryOverlay.renderInventoryStacks(type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, count, mc(), drawContext);
+            InventoryOverlay.renderInventoryBackground(drawContext, type, x, y, props.slotsPerRow, props.totalSlots, color, mc());
+            InventoryOverlay.renderInventoryStacks(drawContext, type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, count, mc());
 
             matrix4fStack.popMatrix();
-            //drawContext.getMatrices().pop();
-            //forceDraw(drawContext);
-            //RenderSystem.applyModelViewMatrix();
         }
     }
 
     /**
-     *  Render's the Inventory Overlay using an NbtCompound Items[] List format instead of the Item Container Component,
-     *  Such as for a Crafter, etc.  This is meant to be simillar to the 1.20.4 behavior, minus the "BlockEntityTag";
-     *  since it no longer exists; but this can be used as such, if the "BlockEntityTag" or its eqivalent, is read in first.
-     *  -
-     * @param stackIn (Stack of the Entity for selecting the right textures)
-     * @param itemsTag (Nbt Items[] list)
+     * Render's the Inventory Overlay using an NbtCompound Items[] List format instead of the Item Container Component,
+     * Such as for a Crafter, etc.  This is meant to be simillar to the 1.20.4 behavior, minus the "BlockEntityTag";
+     * since it no longer exists; but this can be used as such, if the "BlockEntityTag" or its eqivalent, is read in first.
+     * -
+     *
+     * @param stackIn     (Stack of the Entity for selecting the right textures)
+     * @param itemsTag    (Nbt Items[] list)
      * @param baseX
      * @param baseY
      * @param useBgColors
      * @param drawContext
      */
-    public static void renderNbtItemsPreview(ItemStack stackIn, @Nonnull NbtCompound itemsTag, int baseX, int baseY, boolean useBgColors, DrawContext drawContext)
+    public static void renderNbtItemsPreview(DrawContext drawContext, ItemStack stackIn, @Nonnull NbtCompound itemsTag, int baseX, int baseY, boolean useBgColors)
     {
         if (InventoryUtils.hasNbtItems(itemsTag))
         {
@@ -1464,6 +1832,7 @@ public class RenderUtils
             {
                 return;
             }
+
             DefaultedList<ItemStack> items = InventoryUtils.getNbtItems(itemsTag, -1, mc().world.getRegistryManager());
 
             if (items.size() == 0)
@@ -1480,49 +1849,39 @@ public class RenderUtils
             int x = MathHelper.clamp(baseX + 8, 0, screenWidth - props.width);
             int y = MathHelper.clamp(baseY - height, 0, screenHeight - height);
 
-            // Mask items behind the shulker box display, trying to minimize the sharp corners
-            drawTexturedRect(GuiBase.BG_TEXTURE, x + 1, y + 1, 0, 0, props.width - 2, props.height - 2, drawContext);
-
-            color(1f, 1f, 1f, 1f);
-            disableDiffuseLighting();
+            int color = Colors.WHITE;
 
             Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
             matrix4fStack.pushMatrix();
             matrix4fStack.translate(0, 0, 500);
-            //drawContext.getMatrices().push();
-            //drawContext.getMatrices().translate(0, 0, 500);
-            //RenderSystem.applyModelViewMatrix();
 
-            InventoryOverlay.renderInventoryBackground(type, x, y, props.slotsPerRow, items.size(), mc());
-
-            enableDiffuseLightingGui3D();
+            InventoryOverlay.renderInventoryBackground(drawContext, type, x, y, props.slotsPerRow, items.size(), color, mc());
 
             Inventory inv = InventoryUtils.getAsInventory(items);
-            InventoryOverlay.renderInventoryStacks(type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, -1, mc(), drawContext);
+            InventoryOverlay.renderInventoryStacks(drawContext, type, inv, x + props.slotOffsetX, y + props.slotOffsetY, props.slotsPerRow, 0, -1, mc());
 
             matrix4fStack.popMatrix();
-            //drawContext.getMatrices().pop();
-            //RenderSystem.applyModelViewMatrix();
         }
     }
 
     /**
      * Calls RenderUtils.color() with the dye color of the provided shulker box block's color
+     *
      * @param block
      * @param useBgColors
      */
-    public static void setShulkerboxBackgroundTintColor(@Nullable ShulkerBoxBlock block, boolean useBgColors)
+    public static int setShulkerboxBackgroundTintColor(@Nullable ShulkerBoxBlock block, boolean useBgColors)
     {
         if (block != null && useBgColors)
         {
             // In 1.13+ there is the uncolored Shulker Box variant, which returns null from getColor()
             final DyeColor dye = block.getColor() != null ? block.getColor() : DyeColor.PURPLE;
             final float[] colors = getColorComponents(dye.getEntityColor());
-            color(colors[0], colors[1], colors[2], 1f);
+            return ColorHelper.fromFloats(1f, colors[0], colors[1], colors[2]);
         }
         else
         {
-            color(1f, 1f, 1f, 1f);
+            return Colors.WHITE;
         }
     }
 
@@ -1538,10 +1897,10 @@ public class RenderUtils
         int k = (color & '\uff00') >> 8;
         int l = (color & 255) >> 0;
 
-        return new float[]{(float)j / 255.0F, (float)k / 255.0F, (float)l / 255.0F};
+        return new float[]{(float) j / 255.0F, (float) k / 255.0F, (float) l / 255.0F};
     }
 
-    public static void setBundleBackgroundTintColor(ItemStack bundle, boolean useBgColors)
+    public static int setBundleBackgroundTintColor(ItemStack bundle, boolean useBgColors)
     {
         if (useBgColors)
         {
@@ -1550,12 +1909,11 @@ public class RenderUtils
             if (dye != null)
             {
                 final float[] colors = getColorComponents(dye.getEntityColor());
-                color(colors[0], colors[1], colors[2], 1f);
-                return;
+                return ColorHelper.fromFloats(1f, colors[0], colors[1], colors[2]);
             }
         }
 
-        color(1f, 1f, 1f, 1f);
+        return Colors.WHITE;
     }
 
     public static DyeColor getBundleColor(ItemStack bundle)
@@ -1636,99 +1994,221 @@ public class RenderUtils
         }
     }
 
-    @SuppressWarnings("deprecation")
-    public static void renderModelInGui(int x, int y, BakedModel model, BlockState state, float zLevel)
+    public static int setVillagerBackgroundTintColor(VillagerData data, boolean useBgColors)
+    {
+        if (useBgColors)
+        {
+            RegistryEntry<VillagerProfession> profession = data != null ? data.profession() : null;
+            return setVillagerBackgroundTintColor(profession, useBgColors);
+        }
+
+        return Colors.WHITE;
+    }
+
+    public static int setVillagerBackgroundTintColor(RegistryEntry<VillagerProfession> profession, boolean useBgColors)
+    {
+        if (useBgColors)
+        {
+            final DyeColor dye = getVillagerColor(profession);
+
+            if (dye != null)
+            {
+                final float[] colors = getColorComponents(dye.getEntityColor());
+                return ColorHelper.fromFloats(1f, colors[0], colors[1], colors[2]);
+            }
+        }
+
+        return Colors.WHITE;
+    }
+
+    public static DyeColor getVillagerColor(RegistryEntry<VillagerProfession> profession)
+    {
+        if (profession == null)
+        {
+            return null;
+        }
+
+        if (profession.equals(VillagerProfession.NONE))
+        {
+            return DyeColor.BLUE;
+        }
+        else if (profession.matchesKey(VillagerProfession.ARMORER))
+        {
+            return DyeColor.GRAY;
+        }
+        else if (profession.matchesKey(VillagerProfession.BUTCHER))
+        {
+            return DyeColor.PINK;
+        }
+        else if (profession.matchesKey(VillagerProfession.CARTOGRAPHER))
+        {
+            return DyeColor.LIGHT_BLUE;
+        }
+        else if (profession.matchesKey(VillagerProfession.CLERIC))
+        {
+            return DyeColor.PURPLE;
+        }
+        else if (profession.matchesKey(VillagerProfession.FARMER))
+        {
+            return DyeColor.YELLOW;
+        }
+        else if (profession.matchesKey(VillagerProfession.FISHERMAN))
+        {
+            return DyeColor.CYAN;
+        }
+        else if (profession.matchesKey(VillagerProfession.FLETCHER))
+        {
+            return DyeColor.ORANGE;
+        }
+        else if (profession.matchesKey(VillagerProfession.LEATHERWORKER))
+        {
+            return DyeColor.BROWN;
+        }
+        else if (profession.matchesKey(VillagerProfession.LIBRARIAN))
+        {
+            return DyeColor.RED;
+        }
+        else if (profession.matchesKey(VillagerProfession.MASON))
+        {
+            return DyeColor.MAGENTA;
+        }
+        else if (profession.matchesKey(VillagerProfession.NITWIT))
+        {
+            return DyeColor.GREEN;
+        }
+        else if (profession.matchesKey(VillagerProfession.SHEPHERD))
+        {
+            return DyeColor.WHITE;
+        }
+        else if (profession.matchesKey(VillagerProfession.TOOLSMITH))
+        {
+            return DyeColor.LIGHT_GRAY;
+        }
+        else if (profession.matchesKey(VillagerProfession.WEAPONSMITH))
+        {
+            return DyeColor.BLACK;
+        }
+        else
+        {
+            // Unhandled Profession
+            return DyeColor.LIME;
+        }
+    }
+
+    public static boolean stateModelHasQuads(BlockState state)
+    {
+        return modelHasQuads(Objects.requireNonNull(MinecraftClient.getInstance().getBlockRenderManager().getModel(state)));
+    }
+
+    public static boolean modelHasQuads(@Nonnull BlockStateModel model)
+    {
+        return hasQuads(model.getParts(new LocalRandom(0)));
+    }
+
+    public static boolean hasQuads(List<BlockModelPart> modelParts)
+    {
+        if (modelParts.isEmpty()) return false;
+        int totalSize = 0;
+
+        for (BlockModelPart part : modelParts)
+        {
+            for (Direction face : PositionUtils.ALL_DIRECTIONS)
+            {
+                totalSize += part.getQuads(face).size();
+            }
+
+            totalSize += part.getQuads(null).size();
+        }
+
+        return totalSize > 0;
+    }
+
+    public static void renderModelInGui(DrawContext drawContext, int x, int y, BlockState state)
+    {
+        renderModelInGui(drawContext, x, y, 16, 0f, state, 0.625f);
+    }
+
+    public static void renderModelInGui(DrawContext drawContext, int x, int y, int size, float zLevel, BlockState state, float scale)
     {
         if (state.getBlock() == Blocks.AIR)
         {
             return;
         }
 
-        Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
-        matrix4fStack.pushMatrix();
-        // FIXME -- Deprecation (BLOCK_ATLAS_TEXTURE)
-        bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
-        mc().getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).setFilter(false, false);
+        // FIXME
+//        RenderUtils.addSpecialElement(drawContext, new MaLiLibBlockStateModelGuiElement(
+//                state,
+//                x, y,
+//                size,
+//                zLevel, scale,
+//                RenderUtils.peekLastScissor(drawContext))
+//        );
 
-        RenderSystem.enableBlend();
-        setupBlendSimple();
-        color(1f, 1f, 1f, 1f);
-
-        setupGuiTransform(x, y, model.hasDepth(), zLevel);
-
-        matrix4fStack.rotateX(matrix4fRotateFix(30));
-        matrix4fStack.rotateY(matrix4fRotateFix(225));
-        matrix4fStack.scale(0.625f, 0.625f, 0.625f);
-
-        renderModel(model, state);
-        //RenderSystem.disableBlend();
-        matrix4fStack.popMatrix();
+//        MatrixStack matrices = new MatrixStack();
+////        Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+////        matrix4fStack.pushMatrix();
+//
+////        GpuTextureView texture = bindGpuTextureView(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
+//
+//        matrices.push();
+//        //setupGuiTransform(x, y, model.hasDepth(), zLevel);
+////        setupGuiTransform(matrices, x, y, zLevel);
+//        matrices.translate((float) (x + 8.0), (float) (y + 8.0), (float) (zLevel + 100.0));
+//        matrices.scale((float) 16, (float) -16, (float) 16);
+//        Quaternionf rot = new Quaternionf().rotationXYZ(30 * (float) (Math.PI / 180.0), 225 * (float) (Math.PI / 180.0), 0.0F);
+////        matrix4fStack.rotateX(matrix4fRotateFix(30));
+////        matrix4fStack.rotateY(matrix4fRotateFix(225));
+//        matrices.multiply(rot);
+//        matrices.scale(scale, scale, scale);
+//
+//        renderBlockModel(drawContext, matrices, model, state);
+//        //blend(false);
+////        matrix4fStack.popMatrix();
+//        matrices.pop();
     }
 
-    public static void setupGuiTransform(int xPosition, int yPosition, boolean isGui3d, float zLevel)
-    {
-        setupGuiTransform(RenderSystem.getModelViewStack(), xPosition, yPosition, zLevel);
-    }
+//    public static void setupGuiTransform(MatrixStack matrices, int xPosition, int yPosition, float zLevel)
+//    {
+//        matrices.translate((float) (xPosition + 8.0), (float) (yPosition + 8.0), (float) (zLevel + 100.0));
+//        matrices.scale((float) 16, (float) -16, (float) 16);
+//    }
+//
+//    public static void renderBlockModel(DrawContext drawContext, MatrixStack matrices, BlockStateModel model, BlockState state)
+//    {
+////        Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+////        matrix4fStack.pushMatrix();
+////
+////        matrix4fStack.translate((float) -0.5, (float) -0.5, (float) -0.5);
+////        int color = 0xFFFFFFFF;
+//
+//        RenderContext ctx = new RenderContext(() -> "malilib:renderBlockModel", RenderPipelines.SOLID);
+//        BufferBuilder builder = ctx.getBuilder();
+//
+//        renderModel(model, state, matrices, builder);
+//
+//        try
+//        {
+//            BuiltBuffer meshData = builder.endNullable();
+//
+//            if (meshData != null)
+//            {
+//                ctx.draw(meshData, false);
+//                meshData.close();
+//            }
+//
+//            ctx.close();
+//        }
+//        catch (Exception err)
+//        {
+//            MaLiLib.LOGGER.error("renderBlockModel(): Draw Exception; {}", err.getMessage());
+//        }
+//
+////        matrix4fStack.popMatrix();
+//    }
 
-    public static void setupGuiTransform(Matrix4fStack matrix4fStack, int xPosition, int yPosition, float zLevel)
-    {
-        matrix4fStack.translate((float) (xPosition + 8.0), (float) (yPosition + 8.0), (float) (zLevel + 100.0));
-        matrix4fStack.scale((float) 16, (float) -16, (float) 16);
-    }
-
-    public static void renderModel(BakedModel model, BlockState state)
-    {
-        Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
-        matrix4fStack.pushMatrix();
-
-        matrix4fStack.translate((float) -0.5, (float) -0.5, (float) -0.5);
-        int color = 0xFFFFFFFF;
-
-        // TODO watch for side effects
-        //if (model.isBuiltin() == false)
-        //{
-            RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_SOLID);
-            //RenderSystem.setShader(GameRenderer::getRenderTypeSolidProgram);
-            //RenderSystem.applyModelViewMatrix();
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder bufferbuilder = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
-            BuiltBuffer builtBuffer;
-
-            for (Direction face : Direction.values())
-            {
-                RAND.setSeed(0);
-                renderQuads(bufferbuilder, model.getQuads(state, face, RAND), state, color);
-            }
-
-            RAND.setSeed(0);
-            renderQuads(bufferbuilder, model.getQuads(state, null, RAND), state, color);
-
-            try
-            {
-                builtBuffer = bufferbuilder.end();
-                BufferRenderer.drawWithGlobalProgram(builtBuffer);
-                builtBuffer.close();
-            }
-            catch (Exception ignored) { }
-        //}
-
-        matrix4fStack.popMatrix();
-    }
-
-    private static void renderQuads(BufferBuilder renderer, List<BakedQuad> quads, BlockState state, int color)
-    {
-        final int quadCount = quads.size();
-
-        for (int i = 0; i < quadCount; ++i)
-        {
-            BakedQuad quad = quads.get(i);
-            renderQuad(renderer, quad, state, 0xFFFFFFFF);
-        }
-    }
-
+    /*
     private static void renderQuad(BufferBuilder buffer, BakedQuad quad, BlockState state, int color)
     {
-        /*
         buffer.putVertexData(quad.getVertexData());
         buffer.setQuadColor(color);
 
@@ -1753,12 +2233,89 @@ public class RenderUtils
     {
         Vec3i direction = quad.getFace().getVector();
         renderer.normal(direction.getX(), direction.getY(), direction.getZ());
-        */
+    }
+    */
+
+    private static void renderModel(BlockStateModel model, BlockState state,
+                                    MatrixStack matrices, BufferBuilder builder)
+    {
+        LocalRandom random = new LocalRandom(0);
+        List<BlockModelPart> parts = model.getParts(random);
+        MatrixStack.Entry entry = matrices.peek();
+        int l = LightmapTextureManager.pack(15, 15);
+        int[] light = new int[] { l, l, l, l };
+        float[] brightness = new float[] { 0.75f, 0.75f, 0.75f, 1.0f };
+
+        for (BlockModelPart part : parts)
+        {
+            for (Direction face : PositionUtils.ALL_DIRECTIONS)
+            {
+                random.setSeed(0);
+                renderQuads(part.getQuads(face), brightness, light, entry, builder);
+            }
+
+            random.setSeed(0);
+            renderQuads(part.getQuads(null), brightness, light, entry, builder);
+        }
     }
 
-    private static MinecraftClient mc()
+    private static void renderQuads(List<BakedQuad> quads, float[] brightness, int[] light,
+                                    MatrixStack.Entry matrixEntry, BufferBuilder builder)
+    {
+        for (BakedQuad quad : quads)
+        {
+            renderQuad(quad, brightness, light, matrixEntry, builder);
+        }
+    }
+
+    private static void renderQuad(BakedQuad quad, float[] brightness, int[] light,
+                                   MatrixStack.Entry matrixEntry, BufferBuilder builder)
+    {
+        builder.quad(matrixEntry, quad, brightness, 1.0f, 1.0f, 1.0f, 1.0f, light, OverlayTexture.DEFAULT_UV, true);
+    }
+
+    private static void renderModelQuadOverlayBatched(BlockPos pos, BufferBuilder buffer, Color4f color, BakedQuad quad)
+    {
+        final int[] vertexData = quad.vertexData();
+        final int x = pos.getX();
+        final int y = pos.getY();
+        final int z = pos.getZ();
+        final int vertexSize = vertexData.length / 4;
+        float fx, fy, fz;
+
+        for (int index = 0; index < 4; ++index)
+        {
+            fx = x + Float.intBitsToFloat(vertexData[index * vertexSize    ]);
+            fy = y + Float.intBitsToFloat(vertexData[index * vertexSize + 1]);
+            fz = z + Float.intBitsToFloat(vertexData[index * vertexSize + 2]);
+
+            buffer.vertex(fx, fy, fz).color(color.r, color.g, color.b, color.a);
+        }
+    }
+
+    public static MinecraftClient mc()
     {
         return MinecraftClient.getInstance();
+    }
+
+    public static Framebuffer fb()
+    {
+        return mc().getFramebuffer();
+    }
+
+    public static Vec3d camPos()
+    {
+        return mc().gameRenderer.getCamera().getPos();
+    }
+
+    public static TextureManager tex()
+    {
+        return mc().getTextureManager();
+    }
+
+    public static LightmapTextureManager lightmap()
+    {
+        return mc().gameRenderer.getLightmapTextureManager();
     }
 
     /*
@@ -1801,5 +2358,491 @@ public class RenderUtils
     /**
      * Only required for translating the values to their RotationAxis.POSITIVE_?.rotationDegrees() equivalence
      */
-    public static float matrix4fRotateFix(float ang) { return (ang * 0.017453292F); }
+    public static float matrix4fRotateFix(float ang) {return (ang * 0.017453292F);}
+
+    public static void renderBlockOutline(BlockPos pos, float expand, float lineWidth, Color4f color)
+    {
+        renderBlockOutline(pos, expand, lineWidth, color, false);
+    }
+
+    public static void renderBlockOutline(BlockPos pos, float expand, float lineWidth, Color4f color, boolean renderThrough)
+    {
+        // renderThrough ? MaLiLibPipelines.LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL : RenderPipelines.LINES
+        RenderContext ctx = new RenderContext(() -> "malilib:renderBlockOutline", renderThrough ? MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL : MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_LEQUAL_DEPTH);
+        BufferBuilder buffer = ctx.getBuilder();
+
+        drawBlockBoundingBoxOutlinesBatchedLinesSimple(pos, color, expand, buffer);
+
+        try
+        {
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(lineWidth);
+                ctx.draw(meshData, false, true);
+                meshData.close();
+            }
+
+            ctx.close();
+        }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderBlockOutline(): Draw Exception; {}", err.getMessage());
+        }
+    }
+
+    public static void drawBlockBoundingBoxOutlinesBatchedLinesSimple(BlockPos pos, Color4f color,
+                                                                      double expand, BufferBuilder buffer)
+    {
+        Vec3d cameraPos = camPos();
+        final double dx = cameraPos.x;
+        final double dy = cameraPos.y;
+        final double dz = cameraPos.z;
+
+        float minX = (float) (pos.getX() - dx - expand);
+        float minY = (float) (pos.getY() - dy - expand);
+        float minZ = (float) (pos.getZ() - dz - expand);
+        float maxX = (float) (pos.getX() - dx + expand + 1);
+        float maxY = (float) (pos.getY() - dy + expand + 1);
+        float maxZ = (float) (pos.getZ() - dz + expand + 1);
+
+        drawBoxAllEdgesBatchedLines(minX, minY, minZ, maxX, maxY, maxZ, color, buffer);
+    }
+
+    public static void drawConnectingLineBatchedLines(BlockPos pos1, BlockPos pos2, boolean center,
+                                                      Color4f color, BufferBuilder buffer)
+    {
+        Vec3d cameraPos = camPos();
+        final double dx = cameraPos.x;
+        final double dy = cameraPos.y;
+        final double dz = cameraPos.z;
+
+        float x1 = (float) (pos1.getX() - dx);
+        float y1 = (float) (pos1.getY() - dy);
+        float z1 = (float) (pos1.getZ() - dz);
+        float x2 = (float) (pos2.getX() - dx);
+        float y2 = (float) (pos2.getY() - dy);
+        float z2 = (float) (pos2.getZ() - dz);
+
+        if (center)
+        {
+            x1 += 0.5F;
+            y1 += 0.5F;
+            z1 += 0.5F;
+            x2 += 0.5F;
+            y2 += 0.5F;
+            z2 += 0.5F;
+        }
+
+        buffer.vertex(x1, y1, z1).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(x2, y2, z2).color(color.r, color.g, color.b, color.a);
+    }
+
+    public static void renderBlockOutlineOverlapping(BlockPos pos, float expand, float lineWidth,
+                                                     Color4f color1, Color4f color2, Color4f color3, Matrix4f matrix4f)
+    {
+        renderBlockOutlineOverlapping(pos, expand, lineWidth, color1, color2, color3, matrix4f, false);
+    }
+
+    public static void renderBlockOutlineOverlapping(BlockPos pos, float expand, float lineWidth,
+                                                     Color4f color1, Color4f color2, Color4f color3, Matrix4f matrix4f,
+                                                     boolean renderThrough)
+    {
+        Vec3d cameraPos = camPos();
+        final double dx = cameraPos.x;
+        final double dy = cameraPos.y;
+        final double dz = cameraPos.z;
+
+        final float minX = (float) (pos.getX() - dx - expand);
+        final float minY = (float) (pos.getY() - dy - expand);
+        final float minZ = (float) (pos.getZ() - dz - expand);
+        final float maxX = (float) (pos.getX() - dx + expand + 1);
+        final float maxY = (float) (pos.getY() - dy + expand + 1);
+        final float maxZ = (float) (pos.getZ() - dz + expand + 1);
+
+        // renderThrough ? MaLiLibPipelines.LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL : RenderPipelines.LINES
+        RenderContext ctx = new RenderContext(() -> "malilib:renderBlockOutlineOverlapping", renderThrough ? MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL : MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_LEQUAL_DEPTH);
+        BufferBuilder buffer = ctx.getBuilder();
+
+        // Min corner
+        buffer.vertex(minX, minY, minZ).color(color1.r, color1.g, color1.b, color1.a);
+        buffer.vertex(maxX, minY, minZ).color(color1.r, color1.g, color1.b, color1.a);
+
+        buffer.vertex(minX, minY, minZ).color(color1.r, color1.g, color1.b, color1.a);
+        buffer.vertex(minX, maxY, minZ).color(color1.r, color1.g, color1.b, color1.a);
+
+        buffer.vertex(minX, minY, minZ).color(color1.r, color1.g, color1.b, color1.a);
+        buffer.vertex(minX, minY, maxZ).color(color1.r, color1.g, color1.b, color1.a);
+
+        // Max corner
+        buffer.vertex(minX, maxY, maxZ).color(color2.r, color2.g, color2.b, color2.a);
+        buffer.vertex(maxX, maxY, maxZ).color(color2.r, color2.g, color2.b, color2.a);
+
+        buffer.vertex(maxX, minY, maxZ).color(color2.r, color2.g, color2.b, color2.a);
+        buffer.vertex(maxX, maxY, maxZ).color(color2.r, color2.g, color2.b, color2.a);
+
+        buffer.vertex(maxX, maxY, minZ).color(color2.r, color2.g, color2.b, color2.a);
+        buffer.vertex(maxX, maxY, maxZ).color(color2.r, color2.g, color2.b, color2.a);
+
+        // The rest of the edges
+        buffer.vertex(minX, maxY, minZ).color(color3.r, color3.g, color3.b, color3.a);
+        buffer.vertex(maxX, maxY, minZ).color(color3.r, color3.g, color3.b, color3.a);
+
+        buffer.vertex(minX, minY, maxZ).color(color3.r, color3.g, color3.b, color3.a);
+        buffer.vertex(maxX, minY, maxZ).color(color3.r, color3.g, color3.b, color3.a);
+
+        buffer.vertex(maxX, minY, minZ).color(color3.r, color3.g, color3.b, color3.a);
+        buffer.vertex(maxX, maxY, minZ).color(color3.r, color3.g, color3.b, color3.a);
+
+        buffer.vertex(minX, minY, maxZ).color(color3.r, color3.g, color3.b, color3.a);
+        buffer.vertex(minX, maxY, maxZ).color(color3.r, color3.g, color3.b, color3.a);
+
+        buffer.vertex(maxX, minY, minZ).color(color3.r, color3.g, color3.b, color3.a);
+        buffer.vertex(maxX, minY, maxZ).color(color3.r, color3.g, color3.b, color3.a);
+
+        buffer.vertex(minX, maxY, minZ).color(color3.r, color3.g, color3.b, color3.a);
+        buffer.vertex(minX, maxY, maxZ).color(color3.r, color3.g, color3.b, color3.a);
+
+        try
+        {
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(lineWidth);
+                ctx.draw(meshData, false, true);
+                meshData.close();
+            }
+
+            ctx.close();
+        }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderBlockOutlineOverlapping(): Draw Exception; {}", err.getMessage());
+        }
+    }
+
+    public static void renderAreaOutline(BlockPos pos1, BlockPos pos2, float lineWidth,
+                                         Color4f colorX, Color4f colorY, Color4f colorZ)
+    {
+        Vec3d cameraPos = camPos();
+        final double dx = cameraPos.x;
+        final double dy = cameraPos.y;
+        final double dz = cameraPos.z;
+
+        double minX = Math.min(pos1.getX(), pos2.getX()) - dx;
+        double minY = Math.min(pos1.getY(), pos2.getY()) - dy;
+        double minZ = Math.min(pos1.getZ(), pos2.getZ()) - dz;
+        double maxX = Math.max(pos1.getX(), pos2.getX()) - dx + 1;
+        double maxY = Math.max(pos1.getY(), pos2.getY()) - dy + 1;
+        double maxZ = Math.max(pos1.getZ(), pos2.getZ()) - dz + 1;
+
+        drawBoundingBoxEdges((float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ, colorX, colorY, colorZ, lineWidth);
+    }
+
+    private static void drawBoundingBoxEdges(float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
+                                             Color4f colorX, Color4f colorY, Color4f colorZ, float lineWidth)
+    {
+        // MaLiLibPipelines.LINES_NO_DEPTH_NO_CULL
+        RenderContext ctx = new RenderContext(() -> "malilib:drawBoundingBoxEdges", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL);
+        BufferBuilder buffer = ctx.getBuilder();
+
+        drawBoundingBoxLinesX(buffer, minX, minY, minZ, maxX, maxY, maxZ, colorX);
+        drawBoundingBoxLinesY(buffer, minX, minY, minZ, maxX, maxY, maxZ, colorY);
+        drawBoundingBoxLinesZ(buffer, minX, minY, minZ, maxX, maxY, maxZ, colorZ);
+
+        try
+        {
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(lineWidth);
+                ctx.draw(meshData, false, true);
+                meshData.close();
+            }
+
+            ctx.close();
+        }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("drawBoundingBoxEdges(): Draw Exception; {}", err.getMessage());
+        }
+    }
+
+    private static void drawBoundingBoxLinesX(BufferBuilder buffer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
+                                              Color4f color)
+    {
+        buffer.vertex(minX, minY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, minY, minZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(minX, maxY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, maxY, minZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(minX, minY, maxZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, minY, maxZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(minX, maxY, maxZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, maxY, maxZ).color(color.r, color.g, color.b, color.a);
+    }
+
+    private static void drawBoundingBoxLinesY(BufferBuilder buffer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
+                                              Color4f color)
+    {
+        buffer.vertex(minX, minY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(minX, maxY, minZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(maxX, minY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, maxY, minZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(minX, minY, maxZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(minX, maxY, maxZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(maxX, minY, maxZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, maxY, maxZ).color(color.r, color.g, color.b, color.a);
+    }
+
+    private static void drawBoundingBoxLinesZ(BufferBuilder buffer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ,
+                                              Color4f color)
+    {
+        buffer.vertex(minX, minY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(minX, minY, maxZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(maxX, minY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, minY, maxZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(minX, maxY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(minX, maxY, maxZ).color(color.r, color.g, color.b, color.a);
+
+        buffer.vertex(maxX, maxY, minZ).color(color.r, color.g, color.b, color.a);
+        buffer.vertex(maxX, maxY, maxZ).color(color.r, color.g, color.b, color.a);
+    }
+
+    public static void renderAreaSides(BlockPos pos1, BlockPos pos2, Color4f color, Matrix4f matrix4f)
+    {
+        renderAreaSides(pos1, pos2, color, matrix4f, false);
+    }
+
+    public static void renderAreaSides(BlockPos pos1, BlockPos pos2, Color4f color, Matrix4f matrix4f, boolean shouldResort)
+    {
+        // MaLiLibPipelines.POSITION_COLOR_MASA_NO_DEPTH_NO_CULL
+        RenderContext ctx = new RenderContext(() -> "malilib:renderAreaSides", MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LEQUAL_DEPTH_OFFSET_2);
+        BufferBuilder buffer = ctx.getBuilder();
+
+        renderAreaSidesBatched(pos1, pos2, color, 0.002, buffer);
+
+        try
+        {
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                if (shouldResort)
+                {
+                    ctx.upload(meshData, true);
+                    ctx.startResorting(meshData, ctx.createVertexSorter(camPos()));
+                }
+                else
+                {
+                    ctx.upload(meshData, false);
+                }
+
+                meshData.close();
+                ctx.drawPost();
+            }
+
+            ctx.close();
+        }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("renderAreaSides(): Draw Exception; {}", err.getMessage());
+        }
+    }
+
+    /**
+     * Assumes a BufferBuilder in GL_QUADS mode has been initialized
+     */
+    public static void renderAreaSidesBatched(BlockPos pos1, BlockPos pos2, Color4f color,
+                                              double expand, BufferBuilder buffer)
+    {
+        Vec3d cameraPos = camPos();
+        final double dx = cameraPos.x;
+        final double dy = cameraPos.y;
+        final double dz = cameraPos.z;
+        double minX = Math.min(pos1.getX(), pos2.getX()) - dx - expand;
+        double minY = Math.min(pos1.getY(), pos2.getY()) - dy - expand;
+        double minZ = Math.min(pos1.getZ(), pos2.getZ()) - dz - expand;
+        double maxX = Math.max(pos1.getX(), pos2.getX()) + 1 - dx + expand;
+        double maxY = Math.max(pos1.getY(), pos2.getY()) + 1 - dy + expand;
+        double maxZ = Math.max(pos1.getZ(), pos2.getZ()) + 1 - dz + expand;
+
+        drawBoxAllSidesBatchedQuads((float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ, color, buffer);
+    }
+
+    public static void renderAreaOutlineNoCorners(BlockPos pos1, BlockPos pos2,
+                                                  float lineWidth, Color4f colorX, Color4f colorY, Color4f colorZ)
+    {
+        final int xMin = Math.min(pos1.getX(), pos2.getX());
+        final int yMin = Math.min(pos1.getY(), pos2.getY());
+        final int zMin = Math.min(pos1.getZ(), pos2.getZ());
+        final int xMax = Math.max(pos1.getX(), pos2.getX());
+        final int yMax = Math.max(pos1.getY(), pos2.getY());
+        final int zMax = Math.max(pos1.getZ(), pos2.getZ());
+
+        final double expand = 0.001;
+        Vec3d cameraPos = camPos();
+        final double dx = cameraPos.x;
+        final double dy = cameraPos.y;
+        final double dz = cameraPos.z;
+
+        final float dxMin = (float) (-dx - expand);
+        final float dyMin = (float) (-dy - expand);
+        final float dzMin = (float) (-dz - expand);
+        final float dxMax = (float) (-dx + expand);
+        final float dyMax = (float) (-dy + expand);
+        final float dzMax = (float) (-dz + expand);
+
+        final float minX = xMin + dxMin;
+        final float minY = yMin + dyMin;
+        final float minZ = zMin + dzMin;
+        final float maxX = xMax + dxMax;
+        final float maxY = yMax + dyMax;
+        final float maxZ = zMax + dzMax;
+
+        int start, end;
+
+        // RenderPipelines.LINES
+        RenderContext ctx = new RenderContext(() -> "malilib:renderAreaOutlineNoCorners", MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_LEQUAL_DEPTH);
+        BufferBuilder buffer = ctx.getBuilder();
+
+        // Edges along the X-axis
+        start = (pos1.getX() == xMin && pos1.getY() == yMin && pos1.getZ() == zMin) || (pos2.getX() == xMin && pos2.getY() == yMin && pos2.getZ() == zMin) ? xMin + 1 : xMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMin && pos1.getZ() == zMin) || (pos2.getX() == xMax && pos2.getY() == yMin && pos2.getZ() == zMin) ? xMax : xMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(start + dxMin, minY, minZ).color(colorX.r, colorX.g, colorX.b, colorX.a);
+            buffer.vertex(end + dxMax, minY, minZ).color(colorX.r, colorX.g, colorX.b, colorX.a);
+        }
+
+        start = (pos1.getX() == xMin && pos1.getY() == yMax && pos1.getZ() == zMin) || (pos2.getX() == xMin && pos2.getY() == yMax && pos2.getZ() == zMin) ? xMin + 1 : xMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMax && pos1.getZ() == zMin) || (pos2.getX() == xMax && pos2.getY() == yMax && pos2.getZ() == zMin) ? xMax : xMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(start + dxMin, maxY + 1, minZ).color(colorX.r, colorX.g, colorX.b, colorX.a);
+            buffer.vertex(end + dxMax, maxY + 1, minZ).color(colorX.r, colorX.g, colorX.b, colorX.a);
+        }
+
+        start = (pos1.getX() == xMin && pos1.getY() == yMin && pos1.getZ() == zMax) || (pos2.getX() == xMin && pos2.getY() == yMin && pos2.getZ() == zMax) ? xMin + 1 : xMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMin && pos1.getZ() == zMax) || (pos2.getX() == xMax && pos2.getY() == yMin && pos2.getZ() == zMax) ? xMax : xMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(start + dxMin, minY, maxZ + 1).color(colorX.r, colorX.g, colorX.b, colorX.a);
+            buffer.vertex(end + dxMax, minY, maxZ + 1).color(colorX.r, colorX.g, colorX.b, colorX.a);
+        }
+
+        start = (pos1.getX() == xMin && pos1.getY() == yMax && pos1.getZ() == zMax) || (pos2.getX() == xMin && pos2.getY() == yMax && pos2.getZ() == zMax) ? xMin + 1 : xMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMax && pos1.getZ() == zMax) || (pos2.getX() == xMax && pos2.getY() == yMax && pos2.getZ() == zMax) ? xMax : xMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(start + dxMin, maxY + 1, maxZ + 1).color(colorX.r, colorX.g, colorX.b, colorX.a);
+            buffer.vertex(end + dxMax, maxY + 1, maxZ + 1).color(colorX.r, colorX.g, colorX.b, colorX.a);
+        }
+
+        // Edges along the Y-axis
+        start = (pos1.getX() == xMin && pos1.getY() == yMin && pos1.getZ() == zMin) || (pos2.getX() == xMin && pos2.getY() == yMin && pos2.getZ() == zMin) ? yMin + 1 : yMin;
+        end = (pos1.getX() == xMin && pos1.getY() == yMax && pos1.getZ() == zMin) || (pos2.getX() == xMin && pos2.getY() == yMax && pos2.getZ() == zMin) ? yMax : yMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(minX, start + dyMin, minZ).color(colorY.r, colorY.g, colorY.b, colorY.a);
+            buffer.vertex(minX, end + dyMax, minZ).color(colorY.r, colorY.g, colorY.b, colorY.a);
+        }
+
+        start = (pos1.getX() == xMax && pos1.getY() == yMin && pos1.getZ() == zMin) || (pos2.getX() == xMax && pos2.getY() == yMin && pos2.getZ() == zMin) ? yMin + 1 : yMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMax && pos1.getZ() == zMin) || (pos2.getX() == xMax && pos2.getY() == yMax && pos2.getZ() == zMin) ? yMax : yMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(maxX + 1, start + dyMin, minZ).color(colorY.r, colorY.g, colorY.b, colorY.a);
+            buffer.vertex(maxX + 1, end + dyMax, minZ).color(colorY.r, colorY.g, colorY.b, colorY.a);
+        }
+
+        start = (pos1.getX() == xMin && pos1.getY() == yMin && pos1.getZ() == zMax) || (pos2.getX() == xMin && pos2.getY() == yMin && pos2.getZ() == zMax) ? yMin + 1 : yMin;
+        end = (pos1.getX() == xMin && pos1.getY() == yMax && pos1.getZ() == zMax) || (pos2.getX() == xMin && pos2.getY() == yMax && pos2.getZ() == zMax) ? yMax : yMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(minX, start + dyMin, maxZ + 1).color(colorY.r, colorY.g, colorY.b, colorY.a);
+            buffer.vertex(minX, end + dyMax, maxZ + 1).color(colorY.r, colorY.g, colorY.b, colorY.a);
+        }
+
+        start = (pos1.getX() == xMax && pos1.getY() == yMin && pos1.getZ() == zMax) || (pos2.getX() == xMax && pos2.getY() == yMin && pos2.getZ() == zMax) ? yMin + 1 : yMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMax && pos1.getZ() == zMax) || (pos2.getX() == xMax && pos2.getY() == yMax && pos2.getZ() == zMax) ? yMax : yMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(maxX + 1, start + dyMin, maxZ + 1).color(colorY.r, colorY.g, colorY.b, colorY.a);
+            buffer.vertex(maxX + 1, end + dyMax, maxZ + 1).color(colorY.r, colorY.g, colorY.b, colorY.a);
+        }
+
+        // Edges along the Z-axis
+        start = (pos1.getX() == xMin && pos1.getY() == yMin && pos1.getZ() == zMin) || (pos2.getX() == xMin && pos2.getY() == yMin && pos2.getZ() == zMin) ? zMin + 1 : zMin;
+        end = (pos1.getX() == xMin && pos1.getY() == yMin && pos1.getZ() == zMax) || (pos2.getX() == xMin && pos2.getY() == yMin && pos2.getZ() == zMax) ? zMax : zMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(minX, minY, start + dzMin).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+            buffer.vertex(minX, minY, end + dzMax).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+        }
+
+        start = (pos1.getX() == xMax && pos1.getY() == yMin && pos1.getZ() == zMin) || (pos2.getX() == xMax && pos2.getY() == yMin && pos2.getZ() == zMin) ? zMin + 1 : zMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMin && pos1.getZ() == zMax) || (pos2.getX() == xMax && pos2.getY() == yMin && pos2.getZ() == zMax) ? zMax : zMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(maxX + 1, minY, start + dzMin).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+            buffer.vertex(maxX + 1, minY, end + dzMax).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+        }
+
+        start = (pos1.getX() == xMin && pos1.getY() == yMax && pos1.getZ() == zMin) || (pos2.getX() == xMin && pos2.getY() == yMax && pos2.getZ() == zMin) ? zMin + 1 : zMin;
+        end = (pos1.getX() == xMin && pos1.getY() == yMax && pos1.getZ() == zMax) || (pos2.getX() == xMin && pos2.getY() == yMax && pos2.getZ() == zMax) ? zMax : zMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(minX, maxY + 1, start + dzMin).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+            buffer.vertex(minX, maxY + 1, end + dzMax).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+        }
+
+        start = (pos1.getX() == xMax && pos1.getY() == yMax && pos1.getZ() == zMin) || (pos2.getX() == xMax && pos2.getY() == yMax && pos2.getZ() == zMin) ? zMin + 1 : zMin;
+        end = (pos1.getX() == xMax && pos1.getY() == yMax && pos1.getZ() == zMax) || (pos2.getX() == xMax && pos2.getY() == yMax && pos2.getZ() == zMax) ? zMax : zMax + 1;
+
+        if (end > start)
+        {
+            buffer.vertex(maxX + 1, maxY + 1, start + dzMin).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+            buffer.vertex(maxX + 1, maxY + 1, end + dzMax).color(colorZ.r, colorZ.g, colorZ.b, colorZ.a);
+        }
+
+        try
+        {
+            BuiltBuffer meshData = buffer.endNullable();
+
+            if (meshData != null)
+            {
+                ctx.lineWidth(lineWidth);
+                ctx.draw(meshData, false, true);
+                meshData.close();
+            }
+
+            ctx.close();
+        }
+        catch (Exception err)
+        {
+            MaLiLib.LOGGER.error("drawAreaOutlineNoCorners(): Draw Exception; {}", err.getMessage());
+        }
+    }
 }

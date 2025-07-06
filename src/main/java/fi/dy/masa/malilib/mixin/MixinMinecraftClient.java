@@ -1,5 +1,6 @@
 package fi.dy.masa.malilib.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
@@ -14,11 +15,18 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import fi.dy.masa.malilib.MaLiLibConfigs;
+import fi.dy.masa.malilib.MaLiLibReference;
 import fi.dy.masa.malilib.event.InitializationHandler;
 import fi.dy.masa.malilib.event.TickHandler;
 import fi.dy.masa.malilib.event.WorldLoadHandler;
 import fi.dy.masa.malilib.hotkeys.KeybindMulti;
+import fi.dy.masa.malilib.test.ConfigTestEnum;
+import fi.dy.masa.malilib.test.TestSelector;
+
+import java.nio.file.Path;
 
 @Mixin(MinecraftClient.class)
 public abstract class MixinMinecraftClient
@@ -26,8 +34,18 @@ public abstract class MixinMinecraftClient
     @Shadow public ClientWorld world;
     @Unique private ClientWorld worldBefore;
 
+    @Inject(method = "<init>(Lnet/minecraft/client/RunArgs;)V",
+            at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/level/storage/LevelStorage;createSymlinkFinder(Ljava/nio/file/Path;)Lnet/minecraft/util/path/SymlinkFinder;"))
+    private void malilib_onPreGameInit(RunArgs args, CallbackInfo ci,
+                                       @Local Path runDir)
+    {
+        // Register all mod handlers
+        ((InitializationHandler) InitializationHandler.getInstance()).onPreGameInit(runDir);
+    }
+
     @Inject(method = "<init>(Lnet/minecraft/client/RunArgs;)V", at = @At("RETURN"))
-    private void onInitComplete(RunArgs args, CallbackInfo ci)
+    private void malilib_onInitComplete(RunArgs args, CallbackInfo ci)
     {
         // Register all mod handlers
         ((InitializationHandler) InitializationHandler.getInstance()).onGameInitDone();
@@ -103,5 +121,31 @@ public abstract class MixinMinecraftClient
         //MaLiLib.logger.error("MC#onDisconnectPost(): world [{}], worldBefore [{}]", this.world != null, this.worldBefore != null);
         ((WorldLoadHandler) WorldLoadHandler.getInstance()).onWorldLoadPost(this.worldBefore, null, (MinecraftClient)(Object) this);
         this.worldBefore = null;
+    }
+
+    @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
+    private void onLeftClickMouse(CallbackInfoReturnable<Boolean> cir)
+    {
+        if (MaLiLibReference.DEBUG_MODE &&
+            MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() &&
+            ConfigTestEnum.TEST_WALLS_HOTKEY.getBooleanValue())
+        {
+            TestSelector.INSTANCE.select(false);
+            cir.cancel();
+            return;
+        }
+    }
+
+    @Inject(method = "doItemUse", at = @At("HEAD"), cancellable = true)
+    private void onRightClickMouse(CallbackInfo ci)
+    {
+        if (MaLiLibReference.DEBUG_MODE &&
+            MaLiLibConfigs.Test.TEST_CONFIG_BOOLEAN.getBooleanValue() &&
+            ConfigTestEnum.TEST_WALLS_HOTKEY.getBooleanValue())
+        {
+            TestSelector.INSTANCE.select(true);
+            ci.cancel();
+            return;
+        }
     }
 }

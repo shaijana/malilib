@@ -166,18 +166,20 @@ public abstract class WidgetContainer extends WidgetBase
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
-        this.drawSubWidgets(mouseX, mouseY, drawContext);
+        super.render(drawContext, mouseX, mouseY, selected);
+        this.drawSubWidgets(drawContext, mouseX, mouseY);
     }
 
     @Override
-    public void postRenderHovered(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
-        this.drawHoveredSubWidget(mouseX, mouseY, drawContext);
+        super.postRenderHovered(drawContext, mouseX, mouseY, selected);
+        this.drawHoveredSubWidget(drawContext, mouseX, mouseY);
     }
 
-    protected void drawSubWidgets(int mouseX, int mouseY, DrawContext drawContext)
+    protected void drawSubWidgets(DrawContext drawContext, int mouseX, int mouseY)
     {
         this.hoveredSubWidget = null;
 
@@ -185,7 +187,7 @@ public abstract class WidgetContainer extends WidgetBase
         {
             for (WidgetBase widget : this.subWidgets)
             {
-                widget.render(mouseX, mouseY, false, drawContext);
+                widget.render(drawContext, mouseX, mouseY, false);
 
                 if (widget.isMouseOver(mouseX, mouseY))
                 {
@@ -195,11 +197,11 @@ public abstract class WidgetContainer extends WidgetBase
         }
     }
 
-    protected void drawHoveredSubWidget(int mouseX, int mouseY, DrawContext drawContext)
+    protected void drawHoveredSubWidget(DrawContext drawContext, int mouseX, int mouseY)
     {
         if (this.hoveredSubWidget != null)
         {
-            this.hoveredSubWidget.postRenderHovered(mouseX, mouseY, false, drawContext);
+            this.hoveredSubWidget.postRenderHovered(drawContext, mouseX, mouseY, false);
         }
     }
 }

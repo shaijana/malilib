@@ -12,10 +12,10 @@ import fi.dy.masa.malilib.gui.interfaces.IDialogHandler;
 import fi.dy.masa.malilib.gui.widgets.WidgetColorListEdit;
 import fi.dy.masa.malilib.gui.widgets.WidgetColorListEditEntry;
 import fi.dy.masa.malilib.render.RenderUtils;
-import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.StringUtils;
+import fi.dy.masa.malilib.util.data.Color4f;
 
 public class GuiColorListEdit extends GuiListBase<Color4f, WidgetColorListEditEntry, WidgetColorListEdit>
 {
@@ -132,8 +132,9 @@ public class GuiColorListEdit extends GuiListBase<Color4f, WidgetColorListEditEn
     @Override
     protected void drawScreenBackground(DrawContext drawContext, int mouseX, int mouseY)
     {
-        super.drawTexturedBG(drawContext, this.dialogLeft, this.dialogTop, this.dialogWidth, this.dialogHeight, true);
-        RenderUtils.drawOutlinedBox(this.dialogLeft, this.dialogTop, this.dialogWidth, this.dialogHeight, 0xFF000000, COLOR_HORIZONTAL_BAR);
+//        super.drawTexturedBG(drawContext, this.dialogLeft, this.dialogTop, this.dialogWidth, this.dialogHeight, true);
+//        RenderUtils.applyLayer(drawContext, GuiLayer.BLUR);
+        RenderUtils.drawOutlinedBox(drawContext, this.dialogLeft, this.dialogTop, this.dialogWidth, this.dialogHeight, 0xFF000000, COLOR_HORIZONTAL_BAR);
     }
 
     @Override

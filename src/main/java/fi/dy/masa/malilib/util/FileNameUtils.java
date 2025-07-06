@@ -5,16 +5,15 @@ import java.util.Date;
 import java.util.Locale;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Post-ReWrite code
  */
-@ApiStatus.Experimental
 public class FileNameUtils
 {
     public static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
     public static final ImmutableSet<Character> ILLEGAL_CHARACTERS = ImmutableSet.of('/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':' );
+    public static final String REGEX_SANITIZE = "[\\\\/:*?\"<>|]|\\p{C}|\\p{M}";
 
     /**
      * Checks if the given filename contains characters or strings that would be invalid in file names.
@@ -92,6 +91,11 @@ public class FileNameUtils
         }
 
         return name;
+    }
+
+    public static String generateSimpleUnicodeSafeFileName(String fileIn)
+    {
+        return fileIn.replaceAll(REGEX_SANITIZE, "");
     }
 
     public static String generateSafeFileName(String name)

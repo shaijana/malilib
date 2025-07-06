@@ -118,6 +118,7 @@ public class WidgetLockedListEditEntry extends WidgetConfigOptionBase<String>
             {
                 list.set(this.listIndex, config.getEntry(value));
                 this.lastAppliedValue = value;
+                config.setModified();
             }
         }
     }
@@ -144,6 +145,7 @@ public class WidgetLockedListEditEntry extends WidgetConfigOptionBase<String>
 
             if (index2 >= 0)
             {
+                this.parent.getConfig().setModified();
                 this.parent.markConfigsModified();
                 this.parent.applyPendingModifications();
 
@@ -163,23 +165,24 @@ public class WidgetLockedListEditEntry extends WidgetConfigOptionBase<String>
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
-        RenderUtils.color(1f, 1f, 1f, 1f);
+        super.render(drawContext, mouseX, mouseY, selected);
+//        RenderUtils.color(1f, 1f, 1f, 1f);
 
         if (this.isOdd)
         {
-            RenderUtils.drawRect(this.x, this.y, this.width, this.height, 0x20FFFFFF);
+            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x20FFFFFF);
         }
         // Draw a slightly lighter background for even entries
         else
         {
-            RenderUtils.drawRect(this.x, this.y, this.width, this.height, 0x30FFFFFF);
+            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x30FFFFFF);
         }
 
-        this.drawSubWidgets(mouseX, mouseY, drawContext);
-        this.drawTextFields(mouseX, mouseY, drawContext);
-        super.render(mouseX, mouseY, selected, drawContext);
+        this.drawSubWidgets(drawContext, mouseX, mouseY);
+        this.drawTextFields(drawContext, mouseX, mouseY);
+        super.render(drawContext, mouseX, mouseY, selected);
     }
 
     public static class ChangeListenerTextField extends ConfigOptionChangeListenerTextField

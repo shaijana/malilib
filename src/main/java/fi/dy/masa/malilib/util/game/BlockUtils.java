@@ -8,8 +8,10 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.FluidBlock;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.CrafterBlockEntity;
 import net.minecraft.block.enums.Orientation;
 import net.minecraft.fluid.Fluids;
@@ -18,15 +20,21 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.*;
+import net.minecraft.storage.NbtWriteView;
+import net.minecraft.storage.WriteView;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
 
+import fi.dy.masa.malilib.data.MaLiLibTag;
 import fi.dy.masa.malilib.util.StringUtils;
 import fi.dy.masa.malilib.util.data.ResourceLocation;
-import fi.dy.masa.malilib.util.game.wrap.NbtWrap;
 import fi.dy.masa.malilib.util.game.wrap.RegistryUtils;
+import fi.dy.masa.malilib.util.nbt.NbtView;
 
 /**
  * Post-ReWrite code
@@ -103,7 +111,7 @@ public class BlockUtils
         String blockName = index != -1 ? stateString.substring(0, index) : stateString;
         NbtCompound tag = new NbtCompound();
 
-        NbtWrap.putString(tag, "Name", blockName);
+        tag.putString("Name", blockName);
 
         if (index != -1 && stateString.length() > (index + 4) && stateString.charAt(stateString.length() - 1) == ']')
         {
@@ -128,10 +136,10 @@ public class BlockUtils
 
                 String valStr = valIter.next();
 
-                NbtWrap.putString(propsTag, propName, valStr);
+                propsTag.putString(propName, valStr);
             }
 
-            NbtWrap.putTag(tag, "Properties", propsTag);
+            tag.put("Properties", propsTag);
         }
 
         return tag;
@@ -145,19 +153,19 @@ public class BlockUtils
      */
     public static String getBlockStateStringFromTag(NbtCompound stateTag)
     {
-        String name = NbtWrap.getString(stateTag, "Name");
+        String name = stateTag.getString("Name", "");
 
-        if (NbtWrap.containsCompound(stateTag, "Properties") == false)
+        if (stateTag.contains("Properties") == false)
         {
             return name;
         }
 
-        NbtCompound propTag = NbtWrap.getCompound(stateTag, "Properties");
+        NbtCompound propTag = stateTag.getCompoundOrEmpty("Properties");
         ArrayList<Pair<String, String>> props = new ArrayList<>();
 
-        for (String key : NbtWrap.getKeys(propTag))
+        for (String key : propTag.getKeys())
         {
-            props.add(Pair.of(key, NbtWrap.getString(propTag, key)));
+            props.add(Pair.of(key, propTag.getString(key, "")));
         }
 
         final int size = props.size();
@@ -421,7 +429,7 @@ public class BlockUtils
     {
         if (isFacingValidForDirection(stack, facing))
         {
-            return facing.getId();
+            return facing.getIndex();
         }
 
         return -1;
@@ -494,14 +502,91 @@ public class BlockUtils
     /**
      * Write a Block Entity's Data to an ItemStack (Removed from Vanilla, why?)
      *
-     * @param stack
-     * @param be
-     * @param registry
+     * @param stack ()
+     * @param be ()
+     * @param registry ()
      */
     public static void setStackNbt(@Nonnull ItemStack stack, @Nonnull BlockEntity be, @Nonnull DynamicRegistryManager registry)
     {
         NbtCompound nbt = be.createComponentlessNbt(registry);
-        BlockItem.setBlockEntityData(stack, be.getType(), nbt);
+        NbtView view = NbtView.getWriter(registry);
+        view = view.writeNbt(nbt);
+        BlockItem.setBlockEntityData(stack, be.getType(), (NbtWriteView) view.getWriter());
         stack.applyComponentsFrom(be.createComponentMap());
+    }
+
+    /**
+     * Return if the two block states contains blocks in the same BlockTags listed under REPLACEABLE_GROUPS
+     *
+     * @param left ()
+     * @param right ()
+     * @return ()
+     */
+    public static boolean isInSameGroup(BlockState left, BlockState right)
+    {
+        for (TagKey<Block> tagKey : MaLiLibTag.Blocks.REPLACEABLE_GROUPS)
+        {
+            if (left.isIn(tagKey) && right.isIn(tagKey))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Match the properties list only of two block states, ignoring the block type
+     *
+     * @param left ()
+     * @param right ()
+     * @return ()
+     */
+    public static boolean matchPropertiesOnly(BlockState left, BlockState right)
+    {
+        return compareProperties(left, right) && compareProperties(right, left);
+    }
+
+    public static <T extends Comparable<T>> boolean compareProperties(BlockState state, BlockState otherState)
+    {
+        Collection<Property<?>> props = state.getProperties();
+
+        for (Property<?> entry : props)
+        {
+            @SuppressWarnings("unchecked")
+            Property<T> p = (Property<T>) entry;
+
+            if (otherState.contains(p))
+            {
+                T value = state.get(p);
+
+                if (!value.equals(otherState.get(p)))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @SuppressWarnings("deprecation")
+    public static boolean matchSolidFullCubes(BlockState left, BlockState right)
+    {
+        if (left.isSolid() && right.isSolid())
+        {
+            return left.isOpaqueFullCube() && right.isOpaqueFullCube();
+        }
+
+        return false;
+    }
+
+    public static boolean matchMapColors(World world, BlockPos pos, BlockState left, BlockState right)
+    {
+        return left.getMapColor(world, pos) == right.getMapColor(world, pos);
     }
 }

@@ -17,6 +17,7 @@ import fi.dy.masa.malilib.util.StringUtils;
 
 public class ConfigLockedList extends ConfigBase<ConfigLockedList> implements IConfigLockedList
 {
+//    public static final Codec<?> CODEC = null;
     IConfigLockedListType handler;
     ImmutableList<IConfigLockedListEntry> defaultList;
     List<IConfigLockedListEntry> values = new ArrayList<>();
@@ -118,6 +119,12 @@ public class ConfigLockedList extends ConfigBase<ConfigLockedList> implements IC
     }
 
     @Override
+    public void setModified()
+    {
+        this.onValueChanged();
+    }
+
+    @Override
     public void resetToDefault()
     {
         this.setEntries(this.defaultList);
@@ -161,7 +168,7 @@ public class ConfigLockedList extends ConfigBase<ConfigLockedList> implements IC
                     list.addAll(defList);
                 }
 
-                this.setEntries(list);
+                this.values.addAll(list);
             }
             else
             {

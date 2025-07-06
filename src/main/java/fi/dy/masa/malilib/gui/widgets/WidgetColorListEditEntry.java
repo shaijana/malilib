@@ -13,8 +13,8 @@ import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.interfaces.IGuiIcon;
 import fi.dy.masa.malilib.render.RenderUtils;
-import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.StringUtils;
+import fi.dy.masa.malilib.util.data.Color4f;
 
 public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
 {
@@ -30,8 +30,8 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
         this.listIndex = listIndex;
         this.isOdd = isOdd;
         this.defaultValue = defaultValue;
-        this.lastAppliedValue = initialValue.toHexString();
-        this.initialStringValue = initialValue.toHexString();
+        this.lastAppliedValue = initialValue.toString();
+        this.initialStringValue = initialValue.toString();
         this.parent = parent;
 
         int textFieldX = x + 20;
@@ -44,7 +44,7 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
         if (!this.isDummy())
         {
             this.addLabel(x + 2, y + 6, 20, 12, 0xC0C0C0C0, String.format("%3d:", listIndex + 1));
-            bx = this.addTextField(textFieldX, y + 1, resetX, textFieldWidth, 20, initialValue.toHexString());
+            bx = this.addTextField(textFieldX, y + 1, resetX, textFieldWidth, 20, initialValue.toString());
 
             this.addWidget(new WidgetColorIndicator(textFieldX + textFieldWidth + 2, y + 1, 19, 19, initialValue, this::applyNewValueToConfig));
 
@@ -134,6 +134,7 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
             {
                 list.set(this.listIndex, value);
                 this.lastAppliedValue = value.toString();
+                config.setModified();
             }
         }
     }
@@ -144,6 +145,7 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
         final int size = list.size();
         int index = this.listIndex < 0 ? size : (Math.min(this.listIndex, size));
         list.add(index, Color4f.ZERO);
+        this.parent.getConfig().setModified();
         this.parent.refreshEntries();
         this.parent.markConfigsModified();
     }
@@ -156,6 +158,7 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
         if (this.listIndex >= 0 && this.listIndex < size)
         {
             list.remove(this.listIndex);
+            this.parent.getConfig().setModified();
             this.parent.refreshEntries();
             this.parent.markConfigsModified();
         }
@@ -183,6 +186,7 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
 
             if (index2 >= 0)
             {
+                this.parent.getConfig().setModified();
                 this.parent.markConfigsModified();
                 this.parent.applyPendingModifications();
 
@@ -202,23 +206,24 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
-        RenderUtils.color(1f, 1f, 1f, 1f);
+        super.render(drawContext, mouseX, mouseY, selected);
+//        RenderUtils.color(1f, 1f, 1f, 1f);
 
         if (this.isOdd)
         {
-            RenderUtils.drawRect(this.x, this.y, this.width, this.height, 0x20FFFFFF);
+            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x20FFFFFF);
         }
         // Draw a slightly lighter background for even entries
         else
         {
-            RenderUtils.drawRect(this.x, this.y, this.width, this.height, 0x30FFFFFF);
+            RenderUtils.drawRect(drawContext, this.x, this.y, this.width, this.height, 0x30FFFFFF);
         }
 
-        this.drawSubWidgets(mouseX, mouseY, drawContext);
-        this.drawTextFields(mouseX, mouseY, drawContext);
-        super.render(mouseX, mouseY, selected, drawContext);
+        this.drawSubWidgets(drawContext, mouseX, mouseY);
+        this.drawTextFields(drawContext, mouseX, mouseY);
+        super.render(drawContext, mouseX, mouseY, selected);
     }
 
     public static class ChangeListenerTextField extends ConfigOptionChangeListenerTextField
@@ -256,7 +261,8 @@ public class WidgetColorListEditEntry extends WidgetConfigOptionBase<Color4f>
         {
             this.parent.textField.getTextField().setText(this.parent.defaultValue.toString());
             this.parent.parent.applyPendingModifications();
-            this.buttonReset.setEnabled(!this.parent.textField.getTextField().getText().equals(this.parent.defaultValue));
+            this.buttonReset.setEnabled(!this.parent.textField.getTextField().getText().equals(this.parent.defaultValue.toString()));
+            this.parent.parent.refreshEntries();
         }
     }
 

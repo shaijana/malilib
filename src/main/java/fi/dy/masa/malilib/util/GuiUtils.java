@@ -1,21 +1,19 @@
 package fi.dy.masa.malilib.util;
 
 import javax.annotation.Nullable;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import fi.dy.masa.malilib.gui.GuiBase;
-import fi.dy.masa.malilib.gui.GuiTextFieldDouble;
-import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
-import fi.dy.masa.malilib.gui.GuiTextFieldInteger;
-import fi.dy.masa.malilib.gui.MaLiLibIcons;
+
+import fi.dy.masa.malilib.gui.*;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.interfaces.ITextFieldListener;
 import fi.dy.masa.malilib.interfaces.ICoordinateValueModifier;
-import fi.dy.masa.malilib.util.PositionUtils.CoordinateType;
+import fi.dy.masa.malilib.util.position.PositionUtils.CoordinateType;
 
 public class GuiUtils
 {
@@ -43,6 +41,26 @@ public class GuiUtils
     public static Screen getCurrentScreen()
     {
         return MinecraftClient.getInstance().currentScreen;
+    }
+
+    public static int getCurrentScreenHeight()
+    {
+        if (getCurrentScreen() != null)
+        {
+            return getCurrentScreen().height;
+        }
+
+        return getScaledWindowHeight();
+    }
+
+    public static int getCurrentScreenWidth()
+    {
+        if (getCurrentScreen() != null)
+        {
+            return getCurrentScreen().width;
+        }
+
+        return getScaledWindowWidth();
     }
 
     public static void createBlockPosInputsVertical(int x, int y, int textFieldWidth, BlockPos pos,
@@ -98,32 +116,29 @@ public class GuiUtils
 
     public static String getCoordinateValueString(CoordinateType type, BlockPos pos)
     {
-        switch (type)
+        return switch (type)
         {
-            case X:
-                return String.valueOf(pos.getX());
-            case Y:
-                return String.valueOf(pos.getY());
-            case Z:
-                return String.valueOf(pos.getZ());
-        }
+            case X -> String.valueOf(pos.getX());
+            case Y -> String.valueOf(pos.getY());
+            case Z -> String.valueOf(pos.getZ());
+        };
 
-        return "";
     }
 
     public static String getCoordinateValueString(CoordinateType type, Vec3d pos)
     {
-        switch (type)
-        {
-            case X:
-                return String.valueOf(pos.x);
-            case Y:
-                return String.valueOf(pos.y);
-            case Z:
-                return String.valueOf(pos.z);
-        }
+//                return String.valueOf(pos.x);
+//                return String.valueOf(pos.y);
+//                return String.valueOf(pos.z);
 
-        return "";
+        // Truncate to 2 decimal places
+        return switch (type)
+        {
+            case X -> String.format("%.2f", pos.x);
+            case Y -> String.format("%.2f", pos.y);
+            case Z -> String.format("%.2f", pos.z);
+        };
+
     }
 
     protected static int addLabel(int x, int y, CoordinateType type, GuiBase gui)

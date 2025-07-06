@@ -2,29 +2,31 @@ package fi.dy.masa.malilib.gui.widgets;
 
 import java.util.function.IntConsumer;
 import com.google.common.collect.ImmutableList;
+
 import net.minecraft.client.gui.DrawContext;
-import fi.dy.masa.malilib.config.IConfigInteger;
-import fi.dy.masa.malilib.config.options.ConfigInteger;
+
+import fi.dy.masa.malilib.config.IConfigColor;
+import fi.dy.masa.malilib.config.options.ConfigColor;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.GuiColorEditorHSV;
 import fi.dy.masa.malilib.render.RenderUtils;
-import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.StringUtils;
+import fi.dy.masa.malilib.util.data.Color4f;
 
 public class WidgetColorIndicator extends WidgetBase
 {
-    protected final IConfigInteger config;
+    protected final IConfigColor config;
     protected final ImmutableList<String> hoverText;
 
     public WidgetColorIndicator(int x, int y, int width, int height, Color4f color, IntConsumer consumer)
     {
-        this(x, y, width, height, new ConfigInteger("", color.intValue, ""));
+        this(x, y, width, height, new ConfigColor("color_indicator_widget", color));
 
-        ((ConfigInteger) this.config).setValueChangeCallback((cfg) -> consumer.accept(cfg.getIntegerValue()) );
+        ((ConfigColor) this.config).setValueChangeCallback((cfg) -> consumer.accept(cfg.getIntegerValue()) );
     }
 
-    public WidgetColorIndicator(int x, int y, int width, int height, IConfigInteger config)
+    public WidgetColorIndicator(int x, int y, int width, int height, IConfigColor config)
     {
         super(x, y, width, height);
 
@@ -35,28 +37,34 @@ public class WidgetColorIndicator extends WidgetBase
     @Override
     protected boolean onMouseClickedImpl(int mouseX, int mouseY, int mouseButton)
     {
+        //RenderUtils.forceDraw(this.drawContext);
+        //RenderUtils.depthTest(false);
         GuiColorEditorHSV gui = new GuiColorEditorHSV(this.config, null, GuiUtils.getCurrentScreen());
         GuiBase.openGui(gui);
         return true;
     }
 
     @Override
-    public void postRenderHovered(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void postRenderHovered(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
-        RenderUtils.drawHoverText(mouseX, mouseY, this.hoverText, drawContext);
+        super.postRenderHovered(drawContext, mouseX, mouseY, selected);
+        RenderUtils.drawHoverText(drawContext, mouseX, mouseY, this.hoverText);
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext drawContext)
+    public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected)
     {
+        super.render(drawContext, mouseX, mouseY, selected);
         int x = this.getX();
         int y = this.getY();
         int z = this.zLevel;
         int width = this.getWidth();
         int height = this.getHeight();
 
-        RenderUtils.drawRect(x    , y    , width    , height    , 0xFFFFFFFF, z);
-        RenderUtils.drawRect(x + 1, y + 1, width - 2, height - 2, 0xFF000000, z);
-        RenderUtils.drawRect(x + 2, y + 2, width - 4, height - 4, 0xFF000000 | this.config.getIntegerValue(), z);
+        //RenderUtils.depthTest(true);
+        RenderUtils.drawRect(drawContext, x    , y    , width    , height    , 0xFFFFFFFF);
+        RenderUtils.drawRect(drawContext, x + 1, y + 1, width - 2, height - 2, 0xFF000000);
+        RenderUtils.drawRect(drawContext, x + 2, y + 2, width - 4, height - 4, 0xFF000000 | this.config.getIntegerValue());
+        //RenderUtils.depthTest(false);
     }
 }

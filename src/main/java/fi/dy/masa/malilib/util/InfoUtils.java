@@ -3,6 +3,7 @@ package fi.dy.masa.malilib.util;
 import org.jetbrains.annotations.ApiStatus;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
@@ -13,6 +14,7 @@ import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.gui.interfaces.IMessageConsumer;
 import fi.dy.masa.malilib.interfaces.IStringConsumer;
 import fi.dy.masa.malilib.render.MessageRenderer;
+import fi.dy.masa.malilib.util.game.IGameHud;
 
 public class InfoUtils
 {
@@ -157,7 +159,12 @@ public class InfoUtils
      */
     public static void showInGameMessage(MessageType type, String translationKey, Object... args)
     {
-        showInGameMessage(type, 5000, translationKey, args);
+        showInGameMessage(type, calcMessageTimeout(), translationKey, args);
+    }
+
+    private static long calcMessageTimeout()
+    {
+        return (long) (MaLiLibConfigs.Generic.IN_GAME_MESSAGE_TIMEOUT.getFloatValue() * 1000L);
     }
 
     /**
@@ -167,7 +174,7 @@ public class InfoUtils
      * @param translationKey
      * @param args
      */
-    public static void showInGameMessage(MessageType type, int lifeTime, String translationKey, Object... args)
+    public static void showInGameMessage(MessageType type, long lifeTime, String translationKey, Object... args)
     {
         IN_GAME_MESSAGES.addMessage(type, lifeTime, translationKey, args);
     }
@@ -182,21 +189,27 @@ public class InfoUtils
     }
 
     @ApiStatus.Internal
-    public static void renderInGameMessages(net.minecraft.client.gui.DrawContext drawContext)
+    public static void renderInGameMessages(DrawContext drawContext)
     {
         int x = GuiUtils.getScaledWindowWidth() / 2;
         int y = GuiUtils.getScaledWindowHeight() - 76;
 
-        IN_GAME_MESSAGES.drawMessages(x, y, drawContext);
+        IN_GAME_MESSAGES.drawMessages(drawContext, x, y);
     }
 
     public static void sendVanillaMessage(MutableText message)
     {
-        World world = MinecraftClient.getInstance().world;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        World world = mc.world;
 
         if (world != null)
         {
-            MinecraftClient.getInstance().inGameHud.setOverlayMessage(message, false);
+            mc.inGameHud.setOverlayMessage(message, false);
+
+            if (MaLiLibConfigs.Generic.ACTIONBAR_HUD_TICKS.isModified())
+            {
+                ((IGameHud) mc.inGameHud).malilib$setOverlayRemaining(MaLiLibConfigs.Generic.ACTIONBAR_HUD_TICKS.getIntegerValue());
+            }
         }
     }
 
